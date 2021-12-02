@@ -1,0 +1,196 @@
+@charset "utf-8";
+
+* {
+    font-family: Arial, Helvetica, sans-serif;
+    position: relative;
+}
+
+BODY {
+    background-color: #fafafa;
+    margin: 0 0 0 0;
+}
+
+
+/*** header ***/
+#header-box {
+    width: 100%;
+    height: 150px;
+}
+
+#header {
+    width: 1000px;
+    height: 150px;
+    margin: 0 auto;
+}
+
+#header:hover #under_line {
+  stroke-dasharray: 170;
+  stroke-dashoffset: 170;
+  animation: dash 0.8s linear alternate forwards;
+}
+
+@keyframes dash {
+  from {
+    stroke-dashoffset: 170;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+
+
+/*** menu ***/
+#menu-box {
+    width: 100%;
+    height: 100px;
+    margin-top: 20px;
+    margin-bottom: 40px;
+}
+
+#menu {
+    width: 1000px;
+    height: 100px;
+    margin: 0 auto;
+}
+
+.button {
+    width: 25%;
+    height: 100px;
+    display: block;
+    position: relative;
+    float: left;
+    background-color: #e3e3e3;
+}
+
+.button:hover {
+    background-color: #c4c4c4;
+}
+
+.button:active {
+    background-color: #8f8f8f;
+}
+
+
+/*** main content ***/
+table {
+    width: 100%;
+}
+
+
+#center-box {
+    width: 100%;
+    height: auto;
+}
+
+#center-text {
+    margin-bottom: 45px;
+}
+
+#center-text p {
+	padding:10px 0 0 0;
+	margin:0 0 5px 0;
+	text-align: justify;
+	text-indent: 30px;
+}
+
+#center-text h1 {
+    font-size: 1.1em;
+}
+
+
+#content-container {
+    width: 1500px;
+    min-height: 500px;
+    margin: 0 auto;
+}
+
+#left-col {
+    width: 60%;
+    float: left;
+    min-height: 100px
+}
+
+.form {
+    width: 350px;
+    height: auto;
+    margin-left: 30px;
+}
+
+.form fieldset {
+	border:0;
+	padding: 0 0 0 0;
+}
+
+.submit-button {
+    width: 100px;
+    height: 25px;
+}
+
+.date-input {
+    width: 110px;
+    height: 20px;
+}
+
+.time-input {
+    width: 55px;
+    height: 20px;
+}
+
+#right-col {
+    width: 30%;
+    float: left;
+}
+
+#main-plot, #rain-plot, #press-plot, #temp-plot {
+    width: 1500px;
+    height: 1000px;
+    bottom: 0px;
+    display: inline-block;
+}
+
+#rain-plot, #press-plot, #temp-plot {
+    height: 500px;
+}
+
+#temp-table, #press-table, #rain-table {
+    height: 200px;
+}
+
+#recent-main {
+    height: 200px;
+}
+
+#recent-rain, #recent-press, #recent-temp {
+    height: 80px;
+}
+
+/*** footer ***/
+#footer-box {
+    top: 60px;
+    width: 100%;
+    height: 80px;
+    background: url("/static/footer.png") repeat-x;
+}
+
+#footer {
+    width: 1000px;
+    height: 80px;
+    margin: 0 auto;
+}
+
+#bottom-pic {
+    width:300px;
+    height:45px;
+    left: 350px;
+    top: 12px;
+    opacity: 0.4;
+}
+
+
+#autor {
+    right: 60px;
+    top: 30px;
+    float: right;
+    opacity: 0.4;
+}
