@@ -123,6 +123,7 @@ def create_plot_rain(df, plot_name):
             mode="lines",
             name="Srážky",
             hovertemplate="%{y}mm/5min<br>%{x}",
+            line_shape="vh",
             fill="tozeroy",
             fillcolor="Blue",
             line_color="Blue",

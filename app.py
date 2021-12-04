@@ -140,7 +140,7 @@ def home():
             (
                 df_last_record["temperature"].round(2),
                 (df_last_record["pressure"] / 100).round(2),
-                df_last_record["rain"],
+                df_last_record["rain"]*0.08,
                 df_last_record["inserted_at"].max(),
             ),
             "recent-main",
@@ -181,7 +181,7 @@ def rain():
         table_recent=create_table_recent(
             (
                 "Aktuálně(mm/5min)",
-                df_last_record["rain"],
+                df_last_record["rain"]*0.08,
                 df_last_record["inserted_at"].max(),
             ),
             "recent-rain",
