@@ -53,7 +53,7 @@ def create_plot_main(df, plot_name):
     fig.add_trace(
         go.Scatter(
             x=df["inserted_at"],
-            y=df["rain"],
+            y=df["rain"]*0.08,
             mode="lines",
             name="Srážky",
             hovertemplate="%{y}mm/5min<br>%{x}",
@@ -119,7 +119,7 @@ def create_plot_rain(df, plot_name):
     fig.add_trace(
         go.Scatter(
             x=df["inserted_at"],
-            y=df["rain"],
+            y=df["rain"]*0.08,
             mode="lines",
             name="Srážky",
             hovertemplate="%{y}mm/5min<br>%{x}",

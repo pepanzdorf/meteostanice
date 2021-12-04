@@ -54,6 +54,18 @@ def create_list(df, df_day, df_week, df_month, value):
             (df[value].max() / 100),
             (df[value].min() / 100),
         ]
+    elif value == "rain":
+        preklop_koef = 0.08
+        return [
+            (df_day[value].max() * preklop_koef),
+            (df_day[value].min() * preklop_koef),
+            (df_week[value].max() * preklop_koef),
+            (df_week[value].min() * preklop_koef),
+            (df_month[value].max() * preklop_koef),
+            (df_month[value].min() * preklop_koef),
+            (df[value].max() * preklop_koef),
+            (df[value].min() * preklop_koef),
+        ]
     else:
         return [
             df_day[value].max(),
