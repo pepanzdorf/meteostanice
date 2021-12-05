@@ -22,7 +22,6 @@ def create_plot_main(df, plot_name):
         ),
         row=1,
         col=1,
-        secondary_y=True,
     )
 
     fig.add_trace(
@@ -36,6 +35,7 @@ def create_plot_main(df, plot_name):
         ),
         row=1,
         col=1,
+        secondary_y=True,
     )
 
     fig.add_trace(
@@ -84,11 +84,26 @@ def create_plot_main(df, plot_name):
         title_x=0.5,
         font=dict(color="black"),
         margin=dict({"t": 60, "b": 0, "r": 0, "l": 0}),
+        shapes=[
+            dict(
+                type="rect",
+                xref="x domain",
+                yref="y2",
+                x0=0,
+                y0=0,
+                x1=1,
+                y1=df["temperature"].min()-1,
+                fillcolor="lightblue",
+                opacity=0.5,
+                layer="below",
+                line_width=0,
+            )
+        ],
     )
 
     fig.update_xaxes(title_text="Datum", row=2)
-    fig.update_yaxes(title_text="Teplota (°C)", secondary_y=False)
-    fig.update_yaxes(title_text="Osvícení (%)", secondary_y=True)
+    fig.update_yaxes(title_text="Teplota (°C)", secondary_y=True)
+    fig.update_yaxes(title_text="Osvícení (%)", secondary_y=False)
     fig.update_yaxes(title_text="Tlak (hPa)", secondary_y=False, row=2)
     fig.update_yaxes(title_text="Srážky (mm/5min)", secondary_y=True, row=2)
 
@@ -250,7 +265,6 @@ def create_plot_temp(df, plot_name):
         ),
         row=1,
         col=1,
-        secondary_y=True,
     )
 
     fig.add_trace(
@@ -264,6 +278,7 @@ def create_plot_temp(df, plot_name):
         ),
         row=1,
         col=1,
+        secondary_y=True,
     )
 
     fig.update_layout(
@@ -283,11 +298,26 @@ def create_plot_temp(df, plot_name):
         title_x=0.5,
         font=dict(color="black"),
         margin=dict({"t": 60, "b": 0, "r": 0, "l": 0}),
+        shapes=[
+            dict(
+                type="rect",
+                xref="x domain",
+                yref="y2",
+                x0=0,
+                y0=0,
+                x1=1,
+                y1=df["temperature"].min() - 1,
+                fillcolor="lightblue",
+                opacity=0.5,
+                layer="below",
+                line_width=0,
+            )
+        ],
     )
 
     fig.update_xaxes(title_text="Datum")
-    fig.update_yaxes(title_text="Teplota (°C)", secondary_y=False)
-    fig.update_yaxes(title_text="Osvícení (%)", secondary_y=True)
+    fig.update_yaxes(title_text="Teplota (°C)", secondary_y=True)
+    fig.update_yaxes(title_text="Osvícení (%)", secondary_y=False)
 
     config = {
         "displayModeBar": True,
