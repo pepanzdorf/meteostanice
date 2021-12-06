@@ -137,6 +137,20 @@ table {
     height: 20px;
 }
 
+button#today {
+  background-color: rgb(225, 225, 225);
+  width: 80px;
+  height: 30px;
+  text-align: center;
+  font-size: 16px;
+  border-radius: 5px;
+  margin-left: 30px;
+}
+
+button#today:hover {
+    background-color: rgb(210, 210, 210);
+}
+
 #right-col {
     width: 30%;
     float: left;

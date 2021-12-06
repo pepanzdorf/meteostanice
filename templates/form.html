@@ -10,3 +10,11 @@
         <input type="submit" class="submit-button" value="odeslat">
     </fieldset>
 </form>
+<button id="today" onclick="today()">Dnes</button>
+<script>
+function today() {
+   document.getElementsByName("start-date")[0].value = {{ today_date | safe}};
+   document.getElementsByName("end-date")[0].value = {{ today_date | safe}};
+   document.getElementsByClassName("submit-button")[0].click();
+}
+</script>

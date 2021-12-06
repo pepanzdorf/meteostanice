@@ -10,7 +10,9 @@ from pytz import timezone
 app = Flask(__name__)
 
 
-def select_timedelta(start=(datetime.utcnow()-timedelta(days=30)), end=datetime.utcnow()):
+def select_timedelta(
+    start=(datetime.utcnow() - timedelta(days=30)), end=datetime.utcnow()
+):
     conn = psycopg2.connect(
         database="postgres",
         user="postgres",
@@ -22,8 +24,10 @@ def select_timedelta(start=(datetime.utcnow()-timedelta(days=30)), end=datetime.
         conn,
         params={"start": start, "end": end},
     )
-    df["inserted_at"] = (df["inserted_at"].dt.tz_localize("utc").dt.tz_convert("Europe/Prague"))
-    df = df.sort_values(by=['inserted_at'], axis=0, ascending=True)
+    df["inserted_at"] = (
+        df["inserted_at"].dt.tz_localize("utc").dt.tz_convert("Europe/Prague")
+    )
+    df = df.sort_values(by=["inserted_at"], axis=0, ascending=True)
     return df
 
 
@@ -38,7 +42,11 @@ def select_last_record():
         "SELECT * FROM test.records WHERE inserted_at=(SELECT max(inserted_at) FROM test.records);",
         conn,
     )
-    df_last_record["inserted_at"] = (df_last_record["inserted_at"].dt.tz_localize("utc").dt.tz_convert("Europe/Prague"))
+    df_last_record["inserted_at"] = (
+        df_last_record["inserted_at"]
+        .dt.tz_localize("utc")
+        .dt.tz_convert("Europe/Prague")
+    )
     return df_last_record
 
 
@@ -85,34 +93,47 @@ def read_content(sub_path: str):
 
 
 def input_to_datetime(start_date, start_time, end_date, end_time):
-    if (
-        start_date is not None
-        and end_date is not None
-        and start_time is not None
-        and end_time is not None
-        and start_date != ""
-        and end_date != ""
-        and start_time != ""
-        and end_time != ""
-    ):
-        start_date += f"T{start_time}"
-        end_date += f"T{end_time}"
-        try:
-            start_date = datetime.strptime(start_date, "%Y-%m-%dT%H:%M").replace(tzinfo=timezone("Europe/Prague"))
-            end_date = datetime.strptime(end_date, "%Y-%m-%dT%H:%M").replace(tzinfo=timezone("Europe/Prague"))
-            return start_date, end_date
-        except ValueError:
-            return (
-                datetime.utcnow()-timedelta(days=30),
-                datetime.utcnow(),
-            )
+    if start_date is not None and end_date is not None:
+        if (
+            start_time is not None
+            and end_time is not None
+            and start_time != ""
+            and end_time != ""
+        ):
+            start_date += f"T{start_time}"
+            end_date += f"T{end_time}"
+            if start_date == end_date:
+                return datetime.utcnow() - timedelta(days=30), datetime.utcnow()
+            try:
+                start_date = datetime.strptime(start_date, "%Y-%m-%dT%H:%M").replace(
+                    tzinfo=timezone("Europe/Prague")
+                )
+                end_date = datetime.strptime(end_date, "%Y-%m-%dT%H:%M").replace(
+                    tzinfo=timezone("Europe/Prague")
+                )
+                return start_date, end_date
+            except ValueError:
+                return (
+                    datetime.utcnow() - timedelta(days=30),
+                    datetime.utcnow(),
+                )
+        else:
+            try:
+                start_date = datetime.strptime(
+                    f"{start_date}T00:00", "%Y-%m-%dT%H:%M"
+                ).replace(tzinfo=timezone("Europe/Prague"))
+                end_date = datetime.strptime(
+                    f"{end_date}T23:59", "%Y-%m-%dT%H:%M"
+                ).replace(tzinfo=timezone("Europe/Prague"))
+                return start_date, end_date
+            except ValueError:
+                return datetime.utcnow() - timedelta(days=30), datetime.utcnow()
     else:
-        return datetime.utcnow()-timedelta(days=30), datetime.utcnow()
+        return datetime.utcnow() - timedelta(days=30), datetime.utcnow()
 
 
 HOME = read_content("home")
 INFO = read_content("info")
-FORM = read_content("form")
 
 
 @app.route("/")
@@ -135,12 +156,15 @@ def home():
         title="Home",
         content=HOME,
         plot=create_plot_main(df, "main-plot"),
-        form=FORM,
+        form=render_template(
+            "form.html",
+            today_date=f"'{datetime.now(timezone('Europe/Prague')).strftime('%Y-%m-%d')}'",
+        ),
         table=create_table_main(
             (
                 df_last_record["temperature"].round(2),
                 (df_last_record["pressure"] / 100).round(2),
-                df_last_record["rain"]*0.08,
+                df_last_record["rain"] * 0.08,
                 df_last_record["inserted_at"].max(),
             ),
             "recent-main",
@@ -166,7 +190,9 @@ def rain():
     df_month = select_timedelta(
         (datetime.utcnow() - timedelta(days=30)), datetime.utcnow()
     )
-    df_all_time = select_timedelta(datetime(year=2000, month=1, day=1), datetime.utcnow())
+    df_all_time = select_timedelta(
+        datetime(year=2000, month=1, day=1), datetime.utcnow()
+    )
     df_last_record = select_last_record()
     return render_template(
         "template.html",
@@ -177,11 +203,14 @@ def rain():
             "rain-table",
             "mm/5min",
         ),
-        form=FORM,
+        form=render_template(
+            "form.html",
+            today_date=f"'{datetime.now(timezone('Europe/Prague')).strftime('%Y-%m-%d')}'",
+        ),
         table_recent=create_table_recent(
             (
                 "Aktuálně(mm/5min)",
-                df_last_record["rain"]*0.08,
+                df_last_record["rain"] * 0.08,
                 df_last_record["inserted_at"].max(),
             ),
             "recent-rain",
@@ -207,7 +236,9 @@ def press():
     df_month = select_timedelta(
         (datetime.utcnow() - timedelta(days=30)), datetime.utcnow()
     )
-    df_all_time = select_timedelta(datetime(year=2000, month=1, day=1), datetime.utcnow())
+    df_all_time = select_timedelta(
+        datetime(year=2000, month=1, day=1), datetime.utcnow()
+    )
     df_last_record = select_last_record()
     return render_template(
         "template.html",
@@ -218,7 +249,10 @@ def press():
             "press-table",
             "hPa",
         ),
-        form=FORM,
+        form=render_template(
+            "form.html",
+            today_date=f"'{datetime.now(timezone('Europe/Prague')).strftime('%Y-%m-%d')}'",
+        ),
         table_recent=create_table_recent(
             (
                 "Aktuálně(hPa)",
@@ -248,7 +282,9 @@ def temp():
     df_month = select_timedelta(
         (datetime.utcnow() - timedelta(days=30)), datetime.utcnow()
     )
-    df_all_time = select_timedelta(datetime(year=2000, month=1, day=1), datetime.utcnow())
+    df_all_time = select_timedelta(
+        datetime(year=2000, month=1, day=1), datetime.utcnow()
+    )
     df_last_record = select_last_record()
     return render_template(
         "template.html",
@@ -259,7 +295,10 @@ def temp():
             "temp-table",
             "°C",
         ),
-        form=FORM,
+        form=render_template(
+            "form.html",
+            today_date=f"'{datetime.now(timezone('Europe/Prague')).strftime('%Y-%m-%d')}'",
+        ),
         table_recent=create_table_recent(
             (
                 "Aktuálně(°C)",
