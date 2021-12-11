@@ -134,6 +134,7 @@ def input_to_datetime(start_date, start_time, end_date, end_time):
 
 HOME = read_content("home")
 INFO = read_content("info")
+RAIN = read_content("rain")
 
 
 @app.route("/")
@@ -196,6 +197,7 @@ def rain():
     df_last_record = select_last_record()
     return render_template(
         "template.html",
+        content=RAIN,
         title="Srážky",
         plot=create_plot_rain(df, "rain-plot"),
         table=create_table(

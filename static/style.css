@@ -199,6 +199,7 @@ button#today:hover {
     left: 350px;
     top: 12px;
     opacity: 0.4;
+    position: absolute;
 }
 
 
