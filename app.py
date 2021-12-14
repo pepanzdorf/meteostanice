@@ -24,10 +24,11 @@ def select_timedelta(
         conn,
         params={"start": start, "end": end},
     )
-    df["inserted_at"] = (
-        df["inserted_at"].dt.tz_localize("utc").dt.tz_convert("Europe/Prague")
-    )
-    df = df.sort_values(by=["inserted_at"], axis=0, ascending=True)
+    if not df.empty:
+        df["inserted_at"] = (
+            df["inserted_at"].dt.tz_localize("utc").dt.tz_convert("Europe/Prague")
+        )
+        df = df.sort_values(by=["inserted_at"], axis=0, ascending=True)
     return df
 
 
