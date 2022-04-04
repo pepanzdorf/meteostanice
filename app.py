@@ -29,6 +29,7 @@ def select_timedelta(
             df["inserted_at"].dt.tz_localize("utc").dt.tz_convert("Europe/Prague")
         )
         df = df.sort_values(by=["inserted_at"], axis=0, ascending=True)
+        df["rain"] = df["rain"].apply(lambda row: 0 if row != 0 and (row / abs(row)) < 0 else row)
     return df
 
 
@@ -48,6 +49,7 @@ def select_last_record():
         .dt.tz_localize("utc")
         .dt.tz_convert("Europe/Prague")
     )
+    df_last_record["rain"] = df_last_record["rain"].apply(lambda row: 0 if row != 0 and (row / abs(row)) < 0 else row)
     return df_last_record
 
 
