@@ -321,7 +321,7 @@ def info():
         "template.html",
         content=INFO,
         title="Info",
-        table="<img src='/static/srazkomer.png' style='width:384px;height:216px;float: right;'>",
+        table="<img src='/static/meteostanice.png' style='width:384px;height:216px;float: right;'>",
     )
 
 
