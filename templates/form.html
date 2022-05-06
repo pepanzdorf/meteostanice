@@ -3,11 +3,11 @@
         <legend>Zobrazit graf v období</legend>
         <label>Od:
             <input type="date" name="start-date" class="date-input">
-            <input type="text" name="start-time" placeholder="hh:mm" class="time-input" pattern="(([01]?[0-9]{1}|2[0-3]{1}):[0-5]{1}[0-9]{1})|^$" oninvalid="this.setCustomValidity('Zadejte čas ve formátu hh:mm od 00:00 do 23:59. Například 14:30')"><br>
+            <input type="text" name="start-time" placeholder="hh:mm" class="time-input" pattern="(([01]?[0-9]{1}|2[0-3]{1}):[0-5]{1}[0-9]{1})|^$" oninvalid="this.setCustomValidity('Zadejte čas ve formátu hh:mm od 00:00 do 23:59. Například 14:30')" onchange="try{setCustomValidity('')}catch(e){}"><br>
         </label>
         <label>Do:
             <input type="date" name="end-date" class="date-input">
-            <input type="text" name="end-time" placeholder="hh:mm" class="time-input" pattern="(([01]?[0-9]{1}|2[0-3]{1}):[0-5]{1}[0-9]{1})|^$" oninvalid="this.setCustomValidity('Zadejte čas ve formátu hh:mm od 00:00 do 23:59. Například 14:30')">
+            <input type="text" name="end-time" placeholder="hh:mm" class="time-input" pattern="(([01]?[0-9]{1}|2[0-3]{1}):[0-5]{1}[0-9]{1})|^$" oninvalid="this.setCustomValidity('Zadejte čas ve formátu hh:mm od 00:00 do 23:59. Například 14:30')" onchange="try{setCustomValidity('')}catch(e){}">
         </label>
         <input type="submit" class="submit-button" value="odeslat">
     </fieldset>
@@ -15,8 +15,10 @@
 <button id="today" onclick="today()">Dnes</button>
 <script>
 function today() {
-   document.getElementsByName("start-date")[0].value = {{ today_date | safe}};
-   document.getElementsByName("end-date")[0].value = {{ today_date | safe}};
+   document.getElementsByName("start-date")[0].value = {{ today_date | safe }};
+   document.getElementsByName("end-date")[0].value = {{ today_date | safe }};
+   document.getElementsByName("start-time")[0].value = '00:00';
+   document.getElementsByName("end-time")[0].value = '23:59';
    document.getElementsByClassName("submit-button")[0].click();
 }
 </script>

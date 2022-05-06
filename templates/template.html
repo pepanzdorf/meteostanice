@@ -127,6 +127,12 @@
                 {{ content | safe }}
             </div>
             {{ form | safe }}
+            <script>
+               document.getElementsByName("start-date")[0].value = '{{ date_args[0] }}';
+               document.getElementsByName("end-date")[0].value = '{{ date_args[2] }}';
+               document.getElementsByName("start-time")[0].value = '{{ date_args[1] }}';
+               document.getElementsByName("end-time")[0].value = '{{ date_args[3] }}';
+            </script>
         </div>
         <div id="right-col">
             {{ table_recent | safe }}
