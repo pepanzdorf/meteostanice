@@ -13,7 +13,7 @@
 <body>
 <div id="header-box">
     <div id="header">
-        <a href="/home">
+        <a href="/home?start-date={{date_args[0]}}&start-time={{date_args[1]}}&end-date={{date_args[2]}}&end-time={{date_args[3]}}">
             <svg
                width="1000"
                height="150"
@@ -100,10 +100,10 @@
 
 <div id="menu-box">
     <div id="menu">
-        <a class="button" href="/rain"><img src="/static/srazky.svg" alt="Srážky"></a>
-        <a class="button" href="/press"><img src="/static/tlak.svg" alt="Tlak"></a>
-        <a class="button" href="/temp"><img src="/static/teplota.svg" alt="Teplota"></a>
-        <a class="button" href="/info"><img src="/static/informace.svg" alt="Informace"></a>
+        <a class="button" href="/rain?start-date={{date_args[0]}}&start-time={{date_args[1]}}&end-date={{date_args[2]}}&end-time={{date_args[3]}}"><img src="/static/srazky.svg" alt="Srážky"></a>
+        <a class="button" href="/press?start-date={{date_args[0]}}&start-time={{date_args[1]}}&end-date={{date_args[2]}}&end-time={{date_args[3]}}"><img src="/static/tlak.svg" alt="Tlak"></a>
+        <a class="button" href="/temp?start-date={{date_args[0]}}&start-time={{date_args[1]}}&end-date={{date_args[2]}}&end-time={{date_args[3]}}"><img src="/static/teplota.svg" alt="Teplota"></a>
+        <a class="button" href="/info?start-date={{date_args[0]}}&start-time={{date_args[1]}}&end-date={{date_args[2]}}&end-time={{date_args[3]}}"><img src="/static/informace.svg" alt="Informace"></a>
     </div>
 </div>
 

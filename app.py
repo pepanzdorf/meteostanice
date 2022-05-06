@@ -29,7 +29,9 @@ def select_timedelta(
             df["inserted_at"].dt.tz_localize("utc").dt.tz_convert("Europe/Prague")
         )
         df = df.sort_values(by=["inserted_at"], axis=0, ascending=True)
-        df["rain"] = df["rain"].apply(lambda row: 0 if row != 0 and (row / abs(row)) < 0 else row)
+        df["rain"] = df["rain"].apply(
+            lambda row: 0 if row != 0 and (row / abs(row)) < 0 else row
+        )
     return df
 
 
@@ -49,7 +51,9 @@ def select_last_record():
         .dt.tz_localize("utc")
         .dt.tz_convert("Europe/Prague")
     )
-    df_last_record["rain"] = df_last_record["rain"].apply(lambda row: 0 if row != 0 and (row / abs(row)) < 0 else row)
+    df_last_record["rain"] = df_last_record["rain"].apply(
+        lambda row: 0 if row != 0 and (row / abs(row)) < 0 else row
+    )
     return df_last_record
 
 
@@ -147,16 +151,23 @@ def index():
 
 @app.route("/home")
 def home():
-    start_date, end_date = input_to_datetime(
+    date_args = [
         request.args.get("start-date"),
         request.args.get("start-time"),
         request.args.get("end-date"),
         request.args.get("end-time"),
+    ]
+    start_date, end_date = input_to_datetime(
+        date_args[0],
+        date_args[1],
+        date_args[2],
+        date_args[3],
     )
     df = select_timedelta(start_date, end_date)
     df_last_record = select_last_record()
     return render_template(
         "template.html",
+        date_args=date_args,
         title="Home",
         content=HOME,
         plot=create_plot_main(df, "main-plot"),
@@ -178,11 +189,17 @@ def home():
 
 @app.route("/rain")
 def rain():
-    start_date, end_date = input_to_datetime(
+    date_args = [
         request.args.get("start-date"),
         request.args.get("start-time"),
         request.args.get("end-date"),
         request.args.get("end-time"),
+    ]
+    start_date, end_date = input_to_datetime(
+        date_args[0],
+        date_args[1],
+        date_args[2],
+        date_args[3],
     )
     df = select_timedelta(start_date, end_date)
     df_day = select_timedelta(
@@ -200,6 +217,7 @@ def rain():
     df_last_record = select_last_record()
     return render_template(
         "template.html",
+        date_args=date_args,
         content=RAIN,
         title="Srážky",
         plot=create_plot_rain(df, "rain-plot"),
@@ -225,11 +243,17 @@ def rain():
 
 @app.route("/press")
 def press():
-    start_date, end_date = input_to_datetime(
+    date_args = [
         request.args.get("start-date"),
         request.args.get("start-time"),
         request.args.get("end-date"),
         request.args.get("end-time"),
+    ]
+    start_date, end_date = input_to_datetime(
+        date_args[0],
+        date_args[1],
+        date_args[2],
+        date_args[3],
     )
     df = select_timedelta(start_date, end_date)
     df_day = select_timedelta(
@@ -247,6 +271,7 @@ def press():
     df_last_record = select_last_record()
     return render_template(
         "template.html",
+        date_args=date_args,
         title="Tlak",
         plot=create_plot_press(df, "press-plot"),
         table=create_table(
@@ -271,11 +296,17 @@ def press():
 
 @app.route("/temp")
 def temp():
-    start_date, end_date = input_to_datetime(
+    date_args = [
         request.args.get("start-date"),
         request.args.get("start-time"),
         request.args.get("end-date"),
         request.args.get("end-time"),
+    ]
+    start_date, end_date = input_to_datetime(
+        date_args[0],
+        date_args[1],
+        date_args[2],
+        date_args[3],
     )
     df = select_timedelta(start_date, end_date)
     df_day = select_timedelta(
@@ -293,6 +324,7 @@ def temp():
     df_last_record = select_last_record()
     return render_template(
         "template.html",
+        date_args=date_args,
         title="Teplota",
         plot=create_plot_temp(df, "temp-plot"),
         table=create_table(
@@ -317,8 +349,15 @@ def temp():
 
 @app.route("/info")
 def info():
+    date_args = [
+        request.args.get("start-date"),
+        request.args.get("start-time"),
+        request.args.get("end-date"),
+        request.args.get("end-time"),
+    ]
     return render_template(
         "template.html",
+        date_args=date_args,
         content=INFO,
         title="Info",
         table="<img src='/static/meteostanice.png' style='width:384px;height:216px;float: right;'>",
@@ -328,8 +367,8 @@ def info():
 @app.route("/api/v1/weather")
 def weather():
     df = select_timedelta((datetime.utcnow() - timedelta(hours=1)), datetime.utcnow())
-    df['inserted_at'] = df['inserted_at'].apply(lambda x: x.value/1000)
-    df = df.reset_index().to_dict(orient='list')
+    df["inserted_at"] = df["inserted_at"].apply(lambda x: x.value / 1000)
+    df = df.reset_index().to_dict(orient="list")
     return df
 
 
