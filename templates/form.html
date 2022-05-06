@@ -1,12 +1,14 @@
 <form method="GET" class="form">
     <fieldset>
         <legend>Zobrazit graf v období</legend>
-        <label for="start-date">Od:</label>
-        <input type="date" name="start-date" class="date-input">
-        <input type="text" name="start-time" placeholder="hh:mm" class="time-input"><br>
-        <label for="end-date">Do:</label>
-        <input type="date" name="end-date" class="date-input">
-        <input type="text" name="end-time" placeholder="hh:mm" class="time-input">
+        <label>Od:
+            <input type="date" name="start-date" class="date-input">
+            <input type="text" name="start-time" placeholder="hh:mm" class="time-input" pattern="(([01]?[0-9]{1}|2[0-3]{1}):[0-5]{1}[0-9]{1})|^$" oninvalid="this.setCustomValidity('Zadejte čas ve formátu hh:mm od 00:00 do 23:59. Například 14:30')"><br>
+        </label>
+        <label>Do:
+            <input type="date" name="end-date" class="date-input">
+            <input type="text" name="end-time" placeholder="hh:mm" class="time-input" pattern="(([01]?[0-9]{1}|2[0-3]{1}):[0-5]{1}[0-9]{1})|^$" oninvalid="this.setCustomValidity('Zadejte čas ve formátu hh:mm od 00:00 do 23:59. Například 14:30')">
+        </label>
         <input type="submit" class="submit-button" value="odeslat">
     </fieldset>
 </form>
