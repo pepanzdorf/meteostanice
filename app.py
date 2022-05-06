@@ -100,6 +100,7 @@ def read_content(sub_path: str):
 
 
 def input_to_datetime(start_date, start_time, end_date, end_time):
+    cet = timezone("Europe/Prague")
     if start_date is not None and end_date is not None:
         if (
             start_time is not None
@@ -112,12 +113,10 @@ def input_to_datetime(start_date, start_time, end_date, end_time):
             if start_date == end_date:
                 return datetime.utcnow() - timedelta(days=30), datetime.utcnow()
             try:
-                start_date = datetime.strptime(start_date, "%Y-%m-%dT%H:%M").replace(
-                    tzinfo=timezone("Europe/Prague")
+                start_date = cet.localize(
+                    datetime.strptime(start_date, "%Y-%m-%dT%H:%M")
                 )
-                end_date = datetime.strptime(end_date, "%Y-%m-%dT%H:%M").replace(
-                    tzinfo=timezone("Europe/Prague")
-                )
+                end_date = cet.localize(datetime.strptime(end_date, "%Y-%m-%dT%H:%M"))
                 return start_date, end_date
             except ValueError:
                 return (
@@ -126,12 +125,12 @@ def input_to_datetime(start_date, start_time, end_date, end_time):
                 )
         else:
             try:
-                start_date = datetime.strptime(
-                    f"{start_date}T00:00", "%Y-%m-%dT%H:%M"
-                ).replace(tzinfo=timezone("Europe/Prague"))
-                end_date = datetime.strptime(
-                    f"{end_date}T23:59", "%Y-%m-%dT%H:%M"
-                ).replace(tzinfo=timezone("Europe/Prague"))
+                start_date = cet.localize(
+                    datetime.strptime(f"{start_date}T00:00", "%Y-%m-%dT%H:%M")
+                )
+                end_date = cet.localize(
+                    datetime.strptime(f"{end_date}T23:59", "%Y-%m-%dT%H:%M")
+                )
                 return start_date, end_date
             except ValueError:
                 return datetime.utcnow() - timedelta(days=30), datetime.utcnow()
