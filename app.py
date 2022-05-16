@@ -156,6 +156,10 @@ def home():
         request.args.get("end-date"),
         request.args.get("end-time"),
     ]
+    for i in range(len(date_args)):
+        if date_args[i] is None:
+            date_args[i] = ""
+
     start_date, end_date = input_to_datetime(
         date_args[0],
         date_args[1],
@@ -194,6 +198,9 @@ def rain():
         request.args.get("end-date"),
         request.args.get("end-time"),
     ]
+    for i in range(len(date_args)):
+        if date_args[i] is None:
+            date_args[i] = ""
     start_date, end_date = input_to_datetime(
         date_args[0],
         date_args[1],
@@ -248,6 +255,9 @@ def press():
         request.args.get("end-date"),
         request.args.get("end-time"),
     ]
+    for i in range(len(date_args)):
+        if date_args[i] is None:
+            date_args[i] = ""
     start_date, end_date = input_to_datetime(
         date_args[0],
         date_args[1],
@@ -301,6 +311,9 @@ def temp():
         request.args.get("end-date"),
         request.args.get("end-time"),
     ]
+    for i in range(len(date_args)):
+        if date_args[i] is None:
+            date_args[i] = ""
     start_date, end_date = input_to_datetime(
         date_args[0],
         date_args[1],
@@ -354,6 +367,9 @@ def info():
         request.args.get("end-date"),
         request.args.get("end-time"),
     ]
+    for i in range(len(date_args)):
+        if date_args[i] is None:
+            date_args[i] = ""
     return render_template(
         "template.html",
         date_args=date_args,
