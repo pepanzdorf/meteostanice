@@ -4,6 +4,6 @@ CREATE TABLE srazkomer.records (
     inserted_at timestamp,
     temperature float,
     pressure float,
-    rain float,
-    light float
+    rain integer,
+    light integer
 );
