@@ -1,11 +1,17 @@
 <p>Data jsou sbírána meteorologickou stanicí v Rožnově každých 5 minut. Stanice je umístěna v nadmořské výšce 394 m.n.m.</p>
-<p>Stanice obsahuje 4 čidla: teploty, tlaku, osvícení a srážek.</p>
+<p>Stanice obsahuje 7 čidel: dvě teploty, dvě osvícení, tlaku, srážek a relativní vlhkosti vzduchu.</p>
 <h1>Teploty:</h1>
-<p>Čidlo teploty je zakoupeno a komunikuje přes sběrnici I2C. <a href="https://dratek.cz/arduino/1488-iic-i2c-senzor-tlaku-a-teploty-bmp280-3-3v.html">Můžete ho najít zde.</a></p>
+<p>Čidlo teploty BMP280 je zakoupeno a komunikuje přes sběrnici I2C. Je umístěno přímo na meteostanici. <a href="https://dratek.cz/arduino/1488-iic-i2c-senzor-tlaku-a-teploty-bmp280-3-3v.html">Můžete ho najít zde.</a></p>
+<p>Druhé čidlo DS18B20 je umístěno více na balkóně a není tolik ovlivněno prouděním horkého vzduchu kolem stěny baráku. <a href="https://dratek.cz/arduino/848-vodeodolny-teplomer-pro-jednodeskove-pocitace-ds18b20-1m.html">Můžete ho najít zde.</a></p>
 <h1>Tlaku:</h1>
-<p>Čidlo tlaku je ve stejném modulu jako čidlo teploty. <a href="https://dratek.cz/arduino/1488-iic-i2c-senzor-tlaku-a-teploty-bmp280-3-3v.html">Můžete ho najít zde.</a></p>
+<p>Čidlo tlaku BMP280 je ve stejném modulu jako čidlo teploty. <a href="https://dratek.cz/arduino/1488-iic-i2c-senzor-tlaku-a-teploty-bmp280-3-3v.html">Můžete ho najít zde.</a></p>
 <h1>Osvícení:</h1>
-<p>Čidlo osvícení technicky není čidlo, ale pouze fotorezistor. Neměří tedy intenzitu světla v luxech, ale pouze jako procento "otevření" fotorezistoru. Data jsou v procentech, jsou závislá na dodávaném napětí a jsou tedy hlavně orientační. <a href="https://dratek.cz/arduino/1737-svetelny-senzor-temt6000.html">Můžete ho najít zde.</a></p>
+<p style="text-decoration: line-through;">Čidlo osvícení technicky není čidlo, ale pouze fotorezistor. Neměří tedy intenzitu světla v luxech, ale pouze jako procento "otevření" fotorezistoru. Data jsou v procentech, jsou závislá na dodávaném napětí a jsou tedy hlavně orientační. <a href="https://dratek.cz/arduino/1737-svetelny-senzor-temt6000.html">Můžete ho najít zde.</a></p>
+<em style="color: red;font-style: normal;font-weight: 300;">Čidlo bylo nahrazeno 01. 06. 2022 v 15:30 CEST</em>
+<p>Jako senzor osvícení je využit fotovoltaický článek. Je sledováno napětí vytvořené článkem, které je závislé na osvícení. <a href="https://www.hadex.cz/g970b-fotovoltaicky-solarni-panel-mini-2v150ma-ry6-427-60x60mm/">Můžete ho najít zde.</a></p>
+<p>Druhý senzor BH1750 udává osvícení v jednotkách lux. <a href="https://dratek.cz/arduino/902-mereni-intenzity-svetla-bh1750.html">Můžete ho najít zde.</a></p>
+<h1>Relativní vhkosti vzduchu:</h1>
+<p>Čidlo DHT11 měří relativní vlhkost s přesností +-5%. <a href="https://www.aliexpress.com/item/1005001652349506.html?spm=a2g0o.productlist.0.0.6ef471f3CI9vtz&algo_pvid=6518e4a5-cefe-4be5-ad5b-726941b48a4d&algo_exp_id=6518e4a5-cefe-4be5-ad5b-726941b48a4d-1&pdp_ext_f=%7B%22sku_id%22%3A%2212000022230335174%22%7D&pdp_npi=2%40dis%21USD%21%210.64%21%21%21%21%21%400b0a0ae216541086547105720e8ec7%2112000022230335174%21sea">Můžete ho najít zde.</a></p>
 <h1>Srážky:</h1>
 <p>Srážkoměr je vyroben vlastnoručně. Typ srážkoměru je člunkový s rozlišením měření ≈ 0,08mm na překlop. Srážkoměr není vyhřívaný a v zimě je tedy neaktivní</p>
 <p>Aktuální stav srážkoměru: <em style="color: green;font-style: normal;font-weight: 700;">Aktivní</em><br><br>Neaktivní období</p>

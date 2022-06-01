@@ -101,8 +101,8 @@ table {
 
 #content-container {
     width: 1500px;
-    min-height: 500px;
     margin: 0 auto;
+    overflow: hidden;
 }
 
 #left-col {
