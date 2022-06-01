@@ -6,4 +6,8 @@ CREATE TABLE srazkomer.records (
     pressure float,
     rain integer,
     light integer
+    lux float,
+    solar int,
+    humidity int,
+    temperature2 float,
 );
