@@ -148,7 +148,7 @@ def create_plot_main(df, plot_name):
                 x0=0,
                 y0=0,
                 x1=1,
-                y1=min(df["temperature"].min() - 1, -1),
+                y1=min(df["temperature"].min() - 1, df["temperature2"].min() - 1, -1),
                 fillcolor="lightblue",
                 opacity=0.5,
                 layer="below",
@@ -236,8 +236,8 @@ def create_plot_rain(df, plot_name):
         "toImageButtonOptions": {
             "format": "png",
             "filename": "downloaded_plot",
-            "height": 1080,
-            "width": 1920,
+            "height": 500,
+            "width": 1500,
         },
     }
 
@@ -289,7 +289,7 @@ def create_plot_press(df, plot_name):
     )
 
     fig.update_xaxes(title_text="Datum")
-    fig.update_yaxes(title_text="Tlak (hPa)")
+    fig.update_yaxes(title_text="Tlak (hPa)", hoverformat='.2f')
 
     config = {
         "displayModeBar": True,
@@ -297,8 +297,8 @@ def create_plot_press(df, plot_name):
         "toImageButtonOptions": {
             "format": "png",
             "filename": "downloaded_plot",
-            "height": 1080,
-            "width": 1920,
+            "height": 500,
+            "width": 1500,
         },
     }
 
@@ -309,19 +309,21 @@ def create_plot_press(df, plot_name):
 
 def create_plot_temp(df, plot_name):
     fig = make_subplots(
-        rows=1,
+        rows=2,
         cols=1,
         shared_xaxes=True,
-        specs=[[{"secondary_y": True}]],
+        vertical_spacing=0.03,
+        specs=[[{"secondary_y": True}], [{"secondary_y": True}]],
+        row_heights=[500, 500],
     )
 
     fig.add_trace(
         go.Scatter(
             x=df["inserted_at"],
-            y=df["light"],
+            y=df["lux"],
             mode="lines",
-            name="Osvícení",
-            hovertemplate="%{y}%<br>%{x}",
+            name="Intenzita světla",
+            hovertemplate="%{y}lux<br>%{x}",
             line_color="Gold",
         ),
         row=1,
@@ -338,6 +340,47 @@ def create_plot_temp(df, plot_name):
             line_color="Red",
         ),
         row=1,
+        col=1,
+        secondary_y=True,
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=df["inserted_at"],
+            y=df["temperature2"],
+            mode="lines",
+            name="Teplota (balkon)",
+            hovertemplate="%{y}°C<br>%{x}",
+            line_color="#fc00c6",
+        ),
+        row=1,
+        col=1,
+        secondary_y=True,
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=df["inserted_at"],
+            y=df["solar"]/(4095/3.4),
+            mode="lines",
+            name="Osvícení (solární panel)",
+            hovertemplate="%{y}V<br>%{x}",
+            line_color="#f2d324",
+        ),
+        row=2,
+        col=1,
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=df["inserted_at"],
+            y=df["light"],
+            mode="lines",
+            name="Osvícení",
+            hovertemplate="%{y}%<br>%{x}",
+            line_color="#d9bf2b",
+        ),
+        row=2,
         col=1,
         secondary_y=True,
     )
@@ -367,18 +410,22 @@ def create_plot_temp(df, plot_name):
                 x0=0,
                 y0=0,
                 x1=1,
-                y1=min(df["temperature"].min() - 1, -1),
+                y1=min(df["temperature"].min() - 1, df["temperature2"].min() - 1, -1),
                 fillcolor="lightblue",
                 opacity=0.5,
                 layer="below",
                 line_width=0,
             )
         ],
+        xaxis_showticklabels=True,
+        xaxis2_showticklabels=True,
     )
 
-    fig.update_xaxes(title_text="Datum")
-    fig.update_yaxes(title_text="Teplota (°C)", secondary_y=True)
-    fig.update_yaxes(title_text="Osvícení (%)", secondary_y=False)
+    fig.update_xaxes(title_text="Datum", row=2)
+    fig.update_yaxes(title_text="Teplota (°C)", secondary_y=True, hoverformat='.2f', row=1)
+    fig.update_yaxes(title_text="Intenzita světla (lux)", secondary_y=False, hoverformat='.2f', row=1)
+    fig.update_yaxes(title_text="Osvícení (%)", secondary_y=True, row=2)
+    fig.update_yaxes(title_text="Osvícení solární panel (V)", secondary_y=False, hoverformat='.2f', row=2)
 
     config = {
         "displayModeBar": True,
@@ -386,12 +433,73 @@ def create_plot_temp(df, plot_name):
         "toImageButtonOptions": {
             "format": "png",
             "filename": "downloaded_plot",
-            "height": 1080,
-            "width": 1920,
+            "height": 1000,
+            "width": 1500,
         },
     }
 
     plot = fig.to_html(config=config, full_html=False)
+    plot = plot[:4] + f' id="{plot_name}"' + plot[4:]
+    return plot
+
+
+def create_plot_humi(df, plot_name):
+    fig = make_subplots(
+        rows=1,
+        cols=1,
+        shared_xaxes=True,
+        specs=[
+            [{}],
+        ],
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=df["inserted_at"],
+            y=df["humidity"],
+            mode="lines",
+            name="Relativní vlhkost vzduchu",
+            hovertemplate="%{y}%<br>%{x}",
+            line_color="Brown",
+        ),
+        row=1,
+        col=1,
+    )
+
+    fig.update_layout(
+        legend=dict({"bgcolor": "rgba(0, 0, 0, 0)"}),
+        paper_bgcolor="rgba(0,0,0,0)",
+        modebar=dict(
+            {
+                "bgcolor": "rgb(0,0,0,0)",
+                "color": "rgb(150,150,150)",
+                "activecolor": "rgb(100,100,100)",
+            }
+        ),
+        title=dict({"text": "Vlhkost"}),
+        title_font_family="Arial",
+        title_font_size=40,
+        title_xanchor="center",
+        title_x=0.5,
+        margin=dict({"t": 60, "b": 0, "r": 0, "l": 0}),
+        font=dict(color="black"),
+    )
+
+    fig.update_xaxes(title_text="Datum")
+    fig.update_yaxes(title_text="Relativní vlhkost vzduchu (%)")
+
+    config = {
+        "displayModeBar": True,
+        "displaylogo": False,
+        "toImageButtonOptions": {
+            "format": "png",
+            "filename": "downloaded_plot",
+            "height": 500,
+            "width": 1500,
+        },
+    }
+
+    plot = fig.to_html(config=config)[56:-16]
     plot = plot[:4] + f' id="{plot_name}"' + plot[4:]
     return plot
 
@@ -466,10 +574,10 @@ def create_table_main(value, table_name):
             columnwidth=[60, 80],
             header=dict(
                 values=[
-                    value[3].strftime("%Y-%m-%d %H:%M"),
+                    value[0].strftime("%Y-%m-%d %H:%M"),
                     "Teplota(°C)",
+                    "Teplota-balkon(°C)",
                     "Tlak(hPa)",
-                    "Srážky(mm/5min)",
                 ],
                 line_color="black",
                 fill_color="rgb(210, 210, 210)",
@@ -478,13 +586,13 @@ def create_table_main(value, table_name):
             ),
             cells=dict(
                 values=[
-                    "Aktuálně",
-                    value[0],
-                    value[1],
-                    value[2],
+                    ["Aktuálně", "", ""],
+                    [value[1], "Srážky(mm/5min)", value[4]],
+                    [value[2], "Relativní vlhkost vzduchu(%)", value[5]],
+                    [value[3], "Intenzita světla (lux)", value[6]],
                 ],
                 line_color="black",
-                fill=dict(color=["rgb(210, 210, 210)", "rgb(225, 225, 225)"]),
+                fill=dict(color=[["rgb(210, 210, 210)"], ["rgb(225, 225, 225)", "rgb(210, 210, 210)"]*2]),
                 align="center",
                 height=35,
             ),

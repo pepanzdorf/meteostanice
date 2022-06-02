@@ -49,13 +49,13 @@ BODY {
 }
 
 #menu {
-    width: 1000px;
+    width: 1250px;
     height: 100px;
     margin: 0 auto;
 }
 
 .button {
-    width: 25%;
+    width: 20%;
     height: 100px;
     display: block;
     position: relative;
@@ -156,26 +156,34 @@ button#today:hover {
     float: left;
 }
 
-#main-plot, #rain-plot, #press-plot, #temp-plot {
+#main-plot, #rain-plot, #press-plot, #temp-plot, #humi-plot {
     width: 1500px;
     height: 1500px;
     bottom: 0px;
     display: inline-block;
 }
 
-#rain-plot, #press-plot, #temp-plot {
+#rain-plot, #press-plot, #humi-plot {
     height: 500px;
 }
 
-#temp-table, #press-table, #rain-table {
+#temp-plot {
+    height: 1000px;
+}
+
+#temp2-table, #press-table, #rain-table, #humi-table {
     height: 200px;
+}
+
+#temp-table {
+    height: 165px;
 }
 
 #recent-main {
-    height: 200px;
+    height: 300px;
 }
 
-#recent-rain, #recent-press, #recent-temp {
+#recent-rain, #recent-press, #recent-temp, #recent-humi {
     height: 80px;
 }
 

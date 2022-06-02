@@ -180,10 +180,13 @@ def home():
         ),
         table=create_table_main(
             (
+                df_last_record["inserted_at"].max(),
                 df_last_record["temperature"].round(2),
+                df_last_record["temperature2"].round(2),
                 (df_last_record["pressure"] / 100).round(2),
                 df_last_record["rain"] * 0.08,
-                df_last_record["inserted_at"].max(),
+                df_last_record["humidity"],
+                df_last_record["lux"].round(2),
             ),
             "recent-main",
         ),
@@ -342,7 +345,11 @@ def temp():
         table=create_table(
             create_list(df_all_time, df_day, df_week, df_month, "temperature"),
             "temp-table",
-            "°C",
+            "Teploměr °C",
+        ) + create_table(
+            create_list(df_all_time, df_day, df_week, df_month, "temperature2"),
+            "temp2-table",
+            "Teploměr (balkon) °C",
         ),
         form=render_template(
             "form.html",
@@ -355,6 +362,62 @@ def temp():
                 df_last_record["inserted_at"].max(),
             ),
             "recent-temp",
+        ),
+    )
+
+
+@app.route("/humi")
+def humi():
+    date_args = [
+        request.args.get("start-date"),
+        request.args.get("start-time"),
+        request.args.get("end-date"),
+        request.args.get("end-time"),
+    ]
+    for i in range(len(date_args)):
+        if date_args[i] is None:
+            date_args[i] = ""
+    start_date, end_date = input_to_datetime(
+        date_args[0],
+        date_args[1],
+        date_args[2],
+        date_args[3],
+    )
+    df = select_timedelta(start_date, end_date)
+    df_day = select_timedelta(
+        (datetime.utcnow() - timedelta(days=1)), datetime.utcnow()
+    )
+    df_week = select_timedelta(
+        (datetime.utcnow() - timedelta(days=7)), datetime.utcnow()
+    )
+    df_month = select_timedelta(
+        (datetime.utcnow() - timedelta(days=30)), datetime.utcnow()
+    )
+    df_all_time = select_timedelta(
+        datetime(year=2000, month=1, day=1), datetime.utcnow()
+    )
+    df_last_record = select_last_record()
+    return render_template(
+        "template.html",
+        date_args=date_args,
+        title="Vlhkost",
+        plot=create_plot_humi(df, "humi-plot"),
+        table=create_table(
+            create_list(df_all_time, df_day, df_week, df_month, "humidity"),
+            "humi-table",
+            "%",
+        ),
+        form=render_template(
+            "form.html",
+            today_date=f"'{datetime.now(timezone('Europe/Prague')).strftime('%Y-%m-%d')}'",
+        ),
+        table_recent=create_table_recent(
+            (
+                "Aktuálně(%)",
+                df_last_record["humidity"],
+                df_last_record["inserted_at"].max(),
+            ),
+            "recent-humi",
         ),
     )
 
