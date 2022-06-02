@@ -4,20 +4,20 @@ from plotly.subplots import make_subplots
 
 def create_plot_main(df, plot_name):
     fig = make_subplots(
-        rows=2,
+        rows=3,
         cols=1,
         shared_xaxes=True,
-        vertical_spacing=0.02,
-        specs=[[{"secondary_y": True}], [{"secondary_y": True}]],
+        vertical_spacing=0.03,
+        specs=[[{"secondary_y": True}], [{"secondary_y": True}], [{"secondary_y": True}]],
     )
 
     fig.add_trace(
         go.Scatter(
             x=df["inserted_at"],
-            y=df["light"],
+            y=df["lux"],
             mode="lines",
-            name="Osvícení",
-            hovertemplate="%{y}%<br>%{x}",
+            name="Intenzita světla",
+            hovertemplate="%{y}lux<br>%{x}",
             line_color="Gold",
         ),
         row=1,
@@ -29,9 +29,23 @@ def create_plot_main(df, plot_name):
             x=df["inserted_at"],
             y=df["temperature"],
             mode="lines",
-            name="Teplota",
+            name="Teplota (meteostanice)",
             hovertemplate="%{y}°C<br>%{x}",
             line_color="Red",
+        ),
+        row=1,
+        col=1,
+        secondary_y=True,
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=df["inserted_at"],
+            y=df["temperature2"],
+            mode="lines",
+            name="Teplota (balkon)",
+            hovertemplate="%{y}°C<br>%{x}",
+            line_color="#fc00c6",
         ),
         row=1,
         col=1,
@@ -45,6 +59,7 @@ def create_plot_main(df, plot_name):
             mode="lines",
             name="Tlak",
             hovertemplate="%{y}hPa<br>%{x}",
+            line_color="Green",
         ),
         row=2,
         col=1,
@@ -63,6 +78,47 @@ def create_plot_main(df, plot_name):
             line_color="Blue",
         ),
         row=2,
+        col=1,
+        secondary_y=True,
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=df["inserted_at"],
+            y=df["solar"]/(4095/3.4),
+            mode="lines",
+            name="Osvícení (solární panel)",
+            hovertemplate="%{y}V<br>%{x}",
+            line_color="#f2d324",
+        ),
+        row=3,
+        col=1,
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=df["inserted_at"],
+            y=df["light"],
+            mode="lines",
+            name="Osvícení",
+            hovertemplate="%{y}%<br>%{x}",
+            line_color="#d9bf2b",
+        ),
+        row=3,
+        col=1,
+        secondary_y=True,
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=df["inserted_at"],
+            y=df["humidity"],
+            mode="lines",
+            name="Vlhkost",
+            hovertemplate="%{y}%<br>%{x}",
+            line_color="Brown",
+        ),
+        row=3,
         col=1,
         secondary_y=True,
     )
@@ -99,13 +155,18 @@ def create_plot_main(df, plot_name):
                 line_width=0,
             )
         ],
+        xaxis_showticklabels=True,
+        xaxis2_showticklabels=True,
+        xaxis3_showticklabels=True,
     )
 
-    fig.update_xaxes(title_text="Datum", row=2)
-    fig.update_yaxes(title_text="Teplota (°C)", secondary_y=True)
-    fig.update_yaxes(title_text="Osvícení (%)", secondary_y=False)
-    fig.update_yaxes(title_text="Tlak (hPa)", secondary_y=False, row=2)
+    fig.update_xaxes(title_text="Datum", row=3)
+    fig.update_yaxes(title_text="Intenzita světla (lux)", secondary_y=False, hoverformat='.2f', row=1)
+    fig.update_yaxes(title_text="Teplota (°C)", secondary_y=True, hoverformat='.2f', row=1)
+    fig.update_yaxes(title_text="Tlak (hPa)", secondary_y=False, hoverformat='.2f', row=2)
     fig.update_yaxes(title_text="Srážky (mm/5min)", secondary_y=True, row=2)
+    fig.update_yaxes(title_text="Osvícení solární panel (V)", secondary_y=False, hoverformat='.2f', row=3)
+    fig.update_yaxes(title_text="Vlhkost vzduchu / osvícení (%)", secondary_y=True, row=3)
 
     config = {
         "displayModeBar": True,
@@ -113,8 +174,8 @@ def create_plot_main(df, plot_name):
         "toImageButtonOptions": {
             "format": "png",
             "filename": "downloaded_plot",
-            "height": 1080,
-            "width": 1920,
+            "height": 1500,
+            "width": 1500,
         },
     }
 

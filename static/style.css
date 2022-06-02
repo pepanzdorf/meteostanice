@@ -158,7 +158,7 @@ button#today:hover {
 
 #main-plot, #rain-plot, #press-plot, #temp-plot {
     width: 1500px;
-    height: 1000px;
+    height: 1500px;
     bottom: 0px;
     display: inline-block;
 }
