@@ -442,10 +442,20 @@ def info():
     )
 
 
-@app.route("/api/v1/weather")
-def weather():
-    df = select_timedelta((datetime.utcnow() - timedelta(hours=1)), datetime.utcnow())
-    df["inserted_at"] = df["inserted_at"].apply(lambda x: x.value / 1000)
+@app.route("/api/v1/weather/<int:hours>")
+def weather(hours):
+    df = select_timedelta((datetime.utcnow() - timedelta(hours=hours)), datetime.utcnow())
+    df["inserted_at"] = df["inserted_at"].apply(lambda x: x.value / 1000000)
+    df = df.where(pd.notnull(df), None)
+    df = df.reset_index().to_dict(orient="list")
+    return df
+
+
+@app.route("/api/v1/weather/last")
+def weather_last():
+    df = select_last_record()
+    df["inserted_at"] = df["inserted_at"].apply(lambda x: x.value / 1000000)
+    df = df.where(pd.notnull(df), None)
     df = df.reset_index().to_dict(orient="list")
     return df
 
