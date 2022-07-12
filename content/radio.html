@@ -1,0 +1,32 @@
+<form class="form" style="margin-top: 30px">
+<input type="radio" id="minute" name="rainplot" value="Pětiminutové" onclick="show_min()">
+<label for="minute">Pětiminutové</label><br>
+<input type="radio" id="hour" name="rainplot" value="Hodinové" onclick="show_hour()">
+<label for="hour">Hodinové</label><br>
+<input type="radio" id="day" name="rainplot" value="Denní" onclick="show_day()">
+<label for="day">Denní</label>
+</form>
+<script>
+function show_min() {
+   document.getElementById("rain-plot-min").style.display = "inline-block";
+   document.getElementById("rain-plot-hour").style.display = "none";
+   document.getElementById("rain-plot-day").style.display = "none";
+}
+
+function show_hour() {
+   document.getElementById("rain-plot-min").style.display = "none";
+   document.getElementById("rain-plot-hour").style.display = "inline-block";
+   document.getElementById("rain-plot-day").style.display = "none";
+}
+
+function show_day() {
+   document.getElementById("rain-plot-min").style.display = "none";
+   document.getElementById("rain-plot-hour").style.display = "none";
+   document.getElementById("rain-plot-day").style.display = "inline-block";
+}
+
+window.onload = function() {
+    document.getElementById("minute").click();
+}
+</script>
+

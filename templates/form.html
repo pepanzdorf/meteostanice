@@ -13,6 +13,8 @@
     </fieldset>
 </form>
 <button id="today" onclick="today()">Dnes</button>
+{{ radio | safe }}
+
 <script>
 function today() {
    document.getElementsByName("start-date")[0].value = {{ today_date | safe }};

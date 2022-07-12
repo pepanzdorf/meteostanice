@@ -156,14 +156,14 @@ button#today:hover {
     float: left;
 }
 
-#main-plot, #rain-plot, #press-plot, #temp-plot, #humi-plot {
+#main-plot, #rain-plot-min, #rain-plot-hour, #rain-plot-day, #press-plot, #temp-plot, #humi-plot {
     width: 1500px;
     height: 1500px;
     bottom: 0px;
     display: inline-block;
 }
 
-#rain-plot, #press-plot, #humi-plot {
+#rain-plot-min, #rain-plot-hour, #rain-plot-day, #press-plot, #humi-plot {
     height: 500px;
 }
 

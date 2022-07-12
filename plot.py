@@ -198,7 +198,7 @@ def create_plot_rain(df, plot_name):
             y=df["rain"]*0.08,
             mode="lines",
             name="Srážky",
-            hovertemplate="%{y}mm/5min<br>%{x}",
+            hovertemplate="%{y}mm<br>%{x}",
             line_shape="vh",
             fill="tozeroy",
             fillcolor="Blue",
@@ -228,7 +228,7 @@ def create_plot_rain(df, plot_name):
     )
 
     fig.update_xaxes(title_text="Datum")
-    fig.update_yaxes(title_text="Srážky (mm/5min)")
+    fig.update_yaxes(title_text="Srážky")
 
     config = {
         "displayModeBar": True,
