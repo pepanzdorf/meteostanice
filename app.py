@@ -120,7 +120,13 @@ def input_to_datetime(start_date, start_time, end_date, end_time):
                     datetime.strptime(start_date, "%Y-%m-%dT%H:%M")
                 )
                 end_date = cet.localize(datetime.strptime(end_date, "%Y-%m-%dT%H:%M"))
-                return start_date, end_date
+                if end_date > start_date:
+                    return start_date, end_date
+                else:
+                    return (
+                        datetime.now(timezone("utc")) - timedelta(days=30),
+                        datetime.now(timezone("utc")),
+                    )
             except ValueError:
                 return (
                     datetime.now(timezone("utc")) - timedelta(days=30),
@@ -134,7 +140,13 @@ def input_to_datetime(start_date, start_time, end_date, end_time):
                 end_date = cet.localize(
                     datetime.strptime(f"{end_date}T23:59", "%Y-%m-%dT%H:%M")
                 )
-                return start_date, end_date
+                if end_date > start_date:
+                    return start_date, end_date
+                else:
+                    return (
+                        datetime.now(timezone("utc")) - timedelta(days=30),
+                        datetime.now(timezone("utc")),
+                    )
             except ValueError:
                 return datetime.now(timezone("utc")) - timedelta(days=30), datetime.now(
                     timezone("utc")
@@ -156,7 +168,7 @@ def day_rain(df):
     df_day = pd.DataFrame(df.groupby(pd.Grouper(key="inserted_at", freq="1D"))["rain"].sum())
     df_day = pd.DataFrame({"inserted_at": df_day.index, "rain": np.ravel(df_day.values)})
     df_day["inserted_at"] = df_day["inserted_at"] + timedelta(days=1)
-    df_day = df_day.append({"inserted_at": (df_day["inserted_at"].min() - timedelta(days=1)), "rain": 0}, ignore_index=True)
+    df_day = pd.concat([df_day, pd.DataFrame.from_dict({"inserted_at": df_day["inserted_at"].min() - timedelta(days=1), "rain": [0]})], ignore_index=True)
     df_day = df_day.sort_values(by=["inserted_at"], axis=0, ascending=True)
     return df_day
 
