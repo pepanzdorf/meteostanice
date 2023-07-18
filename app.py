@@ -21,7 +21,7 @@ def select_timedelta(
         host="89.221.216.28",
     )
     df = pd.read_sql(
-        "SELECT * FROM test.records WHERE inserted_at BETWEEN %(start)s AND %(end)s",
+        "SELECT * FROM weatherstation.cb_home WHERE inserted_at BETWEEN %(start)s AND %(end)s",
         conn,
         params={"start": start, "end": end},
     )
@@ -44,7 +44,7 @@ def select_last_record():
         host="89.221.216.28",
     )
     df_last_record = pd.read_sql(
-        "SELECT * FROM test.records WHERE inserted_at=(SELECT max(inserted_at) FROM test.records);",
+        "SELECT * FROM weatherstation.cb_home WHERE inserted_at=(SELECT max(inserted_at) FROM weatherstation.cb_home);",
         conn,
     )
     df_last_record["inserted_at"] = (
