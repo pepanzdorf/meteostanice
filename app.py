@@ -173,19 +173,7 @@ def day_rain(df):
     return df_day
 
 
-HOME = read_content("home")
-INFO = read_content("info")
-RAIN = read_content("rain")
-RADIO = read_content("radio")
-
-
-@app.route("/")
-def index():
-    return redirect("/home")
-
-
-@app.route("/home")
-def home():
+def get_user_datetime_input():
     date_args = [
         request.args.get("start-date"),
         request.args.get("start-time"),
@@ -202,6 +190,41 @@ def home():
         date_args[2],
         date_args[3],
     )
+    return date_args, start_date, end_date
+
+
+def get_datasets(start_date, end_date):
+    df = select_timedelta(start_date, end_date)
+    df_day = select_timedelta(
+        (datetime.utcnow() - timedelta(days=1)), datetime.utcnow()
+    )
+    df_week = select_timedelta(
+        (datetime.utcnow() - timedelta(days=7)), datetime.utcnow()
+    )
+    df_month = select_timedelta(
+        (datetime.utcnow() - timedelta(days=30)), datetime.utcnow()
+    )
+    df_all_time = select_timedelta(
+        datetime(year=2000, month=1, day=1), datetime.utcnow()
+    )
+    df_last_record = select_last_record()
+    return df, df_day, df_week, df_month, df_all_time, df_last_record
+
+
+HOME = read_content("home")
+INFO = read_content("info")
+RAIN = read_content("rain")
+RADIO = read_content("radio")
+
+
+@app.route("/")
+def index():
+    return redirect("/home")
+
+
+@app.route("/home")
+def home():
+    date_args, start_date, end_date = get_user_datetime_input()
     df = select_timedelta(start_date, end_date)
     df_last_record = select_last_record()
     return render_template(
@@ -231,35 +254,8 @@ def home():
 
 @app.route("/rain")
 def rain():
-    date_args = [
-        request.args.get("start-date"),
-        request.args.get("start-time"),
-        request.args.get("end-date"),
-        request.args.get("end-time"),
-    ]
-    for i in range(len(date_args)):
-        if date_args[i] is None:
-            date_args[i] = ""
-    start_date, end_date = input_to_datetime(
-        date_args[0],
-        date_args[1],
-        date_args[2],
-        date_args[3],
-    )
-    df = select_timedelta(start_date, end_date)
-    df_day = select_timedelta(
-        (datetime.utcnow() - timedelta(days=1)), datetime.utcnow()
-    )
-    df_week = select_timedelta(
-        (datetime.utcnow() - timedelta(days=7)), datetime.utcnow()
-    )
-    df_month = select_timedelta(
-        (datetime.utcnow() - timedelta(days=30)), datetime.utcnow()
-    )
-    df_all_time = select_timedelta(
-        datetime(year=2000, month=1, day=1), datetime.utcnow()
-    )
-    df_last_record = select_last_record()
+    date_args, start_date, end_date = get_user_datetime_input()
+    df, df_day, df_week, df_month, df_all_time, df_last_record = get_datasets(start_date, end_date)
     df_hour_rain = hour_rain(df)
     df_day_rain = day_rain(df)
     return render_template(
@@ -293,35 +289,8 @@ def rain():
 
 @app.route("/press")
 def press():
-    date_args = [
-        request.args.get("start-date"),
-        request.args.get("start-time"),
-        request.args.get("end-date"),
-        request.args.get("end-time"),
-    ]
-    for i in range(len(date_args)):
-        if date_args[i] is None:
-            date_args[i] = ""
-    start_date, end_date = input_to_datetime(
-        date_args[0],
-        date_args[1],
-        date_args[2],
-        date_args[3],
-    )
-    df = select_timedelta(start_date, end_date)
-    df_day = select_timedelta(
-        (datetime.utcnow() - timedelta(days=1)), datetime.utcnow()
-    )
-    df_week = select_timedelta(
-        (datetime.utcnow() - timedelta(days=7)), datetime.utcnow()
-    )
-    df_month = select_timedelta(
-        (datetime.utcnow() - timedelta(days=30)), datetime.utcnow()
-    )
-    df_all_time = select_timedelta(
-        datetime(year=2000, month=1, day=1), datetime.utcnow()
-    )
-    df_last_record = select_last_record()
+    date_args, start_date, end_date = get_user_datetime_input()
+    df, df_day, df_week, df_month, df_all_time, df_last_record = get_datasets(start_date, end_date)
     return render_template(
         "template.html",
         date_args=date_args,
@@ -349,35 +318,8 @@ def press():
 
 @app.route("/temp")
 def temp():
-    date_args = [
-        request.args.get("start-date"),
-        request.args.get("start-time"),
-        request.args.get("end-date"),
-        request.args.get("end-time"),
-    ]
-    for i in range(len(date_args)):
-        if date_args[i] is None:
-            date_args[i] = ""
-    start_date, end_date = input_to_datetime(
-        date_args[0],
-        date_args[1],
-        date_args[2],
-        date_args[3],
-    )
-    df = select_timedelta(start_date, end_date)
-    df_day = select_timedelta(
-        (datetime.utcnow() - timedelta(days=1)), datetime.utcnow()
-    )
-    df_week = select_timedelta(
-        (datetime.utcnow() - timedelta(days=7)), datetime.utcnow()
-    )
-    df_month = select_timedelta(
-        (datetime.utcnow() - timedelta(days=30)), datetime.utcnow()
-    )
-    df_all_time = select_timedelta(
-        datetime(year=2000, month=1, day=1), datetime.utcnow()
-    )
-    df_last_record = select_last_record()
+    date_args, start_date, end_date = get_user_datetime_input()
+    df, df_day, df_week, df_month, df_all_time, df_last_record = get_datasets(start_date, end_date)
     return render_template(
         "template.html",
         date_args=date_args,
@@ -410,35 +352,8 @@ def temp():
 
 @app.route("/humi")
 def humi():
-    date_args = [
-        request.args.get("start-date"),
-        request.args.get("start-time"),
-        request.args.get("end-date"),
-        request.args.get("end-time"),
-    ]
-    for i in range(len(date_args)):
-        if date_args[i] is None:
-            date_args[i] = ""
-    start_date, end_date = input_to_datetime(
-        date_args[0],
-        date_args[1],
-        date_args[2],
-        date_args[3],
-    )
-    df = select_timedelta(start_date, end_date)
-    df_day = select_timedelta(
-        (datetime.utcnow() - timedelta(days=1)), datetime.utcnow()
-    )
-    df_week = select_timedelta(
-        (datetime.utcnow() - timedelta(days=7)), datetime.utcnow()
-    )
-    df_month = select_timedelta(
-        (datetime.utcnow() - timedelta(days=30)), datetime.utcnow()
-    )
-    df_all_time = select_timedelta(
-        datetime(year=2000, month=1, day=1), datetime.utcnow()
-    )
-    df_last_record = select_last_record()
+    date_args, start_date, end_date = get_user_datetime_input()
+    df, df_day, df_week, df_month, df_all_time, df_last_record = get_datasets(start_date, end_date)
     return render_template(
         "template.html",
         date_args=date_args,
@@ -466,15 +381,7 @@ def humi():
 
 @app.route("/info")
 def info():
-    date_args = [
-        request.args.get("start-date"),
-        request.args.get("start-time"),
-        request.args.get("end-date"),
-        request.args.get("end-time"),
-    ]
-    for i in range(len(date_args)):
-        if date_args[i] is None:
-            date_args[i] = ""
+    date_args, _, _ = get_user_datetime_input()
     return render_template(
         "template.html",
         date_args=date_args,
