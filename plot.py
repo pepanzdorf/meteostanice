@@ -14,7 +14,7 @@ def create_plot_main(df, plot_name):
     fig.add_trace(
         go.Scatter(
             x=df["inserted_at"],
-            y=df["lux"],
+            y=df["light_bh1750"],
             mode="lines",
             name="Intenzita světla",
             hovertemplate="%{y}lux<br>%{x}",
@@ -27,7 +27,7 @@ def create_plot_main(df, plot_name):
     fig.add_trace(
         go.Scatter(
             x=df["inserted_at"],
-            y=df["temperature"],
+            y=df["temperature_bmp280"],
             mode="lines",
             name="Teplota (meteostanice)",
             hovertemplate="%{y}°C<br>%{x}",
@@ -41,7 +41,7 @@ def create_plot_main(df, plot_name):
     fig.add_trace(
         go.Scatter(
             x=df["inserted_at"],
-            y=df["temperature2"],
+            y=df["temperature_ds18b20"],
             mode="lines",
             name="Teplota (balkon)",
             hovertemplate="%{y}°C<br>%{x}",
@@ -55,7 +55,7 @@ def create_plot_main(df, plot_name):
     fig.add_trace(
         go.Scatter(
             x=df["inserted_at"],
-            y=(df["pressure"] / 100).round(2),
+            y=(df["pressure_bmp280"] / 100).round(2),
             mode="lines",
             name="Tlak",
             hovertemplate="%{y}hPa<br>%{x}",
@@ -98,7 +98,7 @@ def create_plot_main(df, plot_name):
     fig.add_trace(
         go.Scatter(
             x=df["inserted_at"],
-            y=df["light"],
+            y=df["light_temt6000"],
             mode="lines",
             name="Osvícení",
             hovertemplate="%{y}%<br>%{x}",
@@ -112,7 +112,7 @@ def create_plot_main(df, plot_name):
     fig.add_trace(
         go.Scatter(
             x=df["inserted_at"],
-            y=df["humidity"],
+            y=df["humidity_dht"],
             mode="lines",
             name="Vlhkost",
             hovertemplate="%{y}%<br>%{x}",
@@ -148,7 +148,7 @@ def create_plot_main(df, plot_name):
                 x0=0,
                 y0=0,
                 x1=1,
-                y1=min(df["temperature"].min() - 1, df["temperature2"].min() - 1, -1),
+                y1=min(df["temperature_bmp280"].min() - 1, df["temperature_ds18b20"].min() - 1, -1),
                 fillcolor="lightblue",
                 opacity=0.5,
                 layer="below",
@@ -259,7 +259,7 @@ def create_plot_press(df, plot_name):
     fig.add_trace(
         go.Scatter(
             x=df["inserted_at"],
-            y=(df["pressure"] / 100).round(2),
+            y=(df["pressure_bmp280"] / 100).round(2),
             mode="lines",
             name="Tlak",
             hovertemplate="%{y}hPa<br>%{x}",
@@ -320,7 +320,7 @@ def create_plot_temp(df, plot_name):
     fig.add_trace(
         go.Scatter(
             x=df["inserted_at"],
-            y=df["lux"],
+            y=df["light_bh1750"],
             mode="lines",
             name="Intenzita světla",
             hovertemplate="%{y}lux<br>%{x}",
@@ -333,7 +333,7 @@ def create_plot_temp(df, plot_name):
     fig.add_trace(
         go.Scatter(
             x=df["inserted_at"],
-            y=df["temperature"],
+            y=df["temperature_bmp280"],
             mode="lines",
             name="Teplota",
             hovertemplate="%{y}°C<br>%{x}",
@@ -347,7 +347,7 @@ def create_plot_temp(df, plot_name):
     fig.add_trace(
         go.Scatter(
             x=df["inserted_at"],
-            y=df["temperature2"],
+            y=df["temperature_ds18b20"],
             mode="lines",
             name="Teplota (balkon)",
             hovertemplate="%{y}°C<br>%{x}",
@@ -374,7 +374,7 @@ def create_plot_temp(df, plot_name):
     fig.add_trace(
         go.Scatter(
             x=df["inserted_at"],
-            y=df["light"],
+            y=df["light_temt6000"],
             mode="lines",
             name="Osvícení",
             hovertemplate="%{y}%<br>%{x}",
@@ -410,7 +410,7 @@ def create_plot_temp(df, plot_name):
                 x0=0,
                 y0=0,
                 x1=1,
-                y1=min(df["temperature"].min() - 1, df["temperature2"].min() - 1, -1),
+                y1=min(df["temperature_bmp280"].min() - 1, df["temperature_ds18b20"].min() - 1, -1),
                 fillcolor="lightblue",
                 opacity=0.5,
                 layer="below",
@@ -456,7 +456,7 @@ def create_plot_humi(df, plot_name):
     fig.add_trace(
         go.Scatter(
             x=df["inserted_at"],
-            y=df["humidity"],
+            y=df["humidity_dht"],
             mode="lines",
             name="Relativní vlhkost vzduchu",
             hovertemplate="%{y}%<br>%{x}",

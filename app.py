@@ -1,4 +1,4 @@
-from flask import Flask, render_template, abort, redirect, request
+from flask import Flask, render_template, redirect, request
 from plot import *
 import pandas as pd
 from datetime import datetime, timedelta
@@ -21,7 +21,7 @@ def select_timedelta(
         host="89.221.216.28",
     )
     df = pd.read_sql(
-        "SELECT * FROM weatherstation.cb_home WHERE inserted_at BETWEEN %(start)s AND %(end)s",
+        "SELECT * FROM weatherstation.records WHERE station_name = 'CBHOME' and inserted_at BETWEEN %(start)s AND %(end)s",
         conn,
         params={"start": start, "end": end},
     )
@@ -44,7 +44,7 @@ def select_last_record():
         host="89.221.216.28",
     )
     df_last_record = pd.read_sql(
-        "SELECT * FROM weatherstation.cb_home WHERE inserted_at=(SELECT max(inserted_at) FROM weatherstation.cb_home);",
+        "SELECT * FROM weatherstation.records WHERE station_name = 'CBHOME' and inserted_at=(SELECT max(inserted_at) FROM weatherstation.records where station_name = 'CBHOME');",
         conn,
     )
     df_last_record["inserted_at"] = (
@@ -59,7 +59,7 @@ def select_last_record():
 
 
 def create_list(df, df_day, df_week, df_month, value):
-    if value == "pressure":
+    if value == "pressure_bmp280":
         return [
             (df_day[value].max() / 100),
             (df_day[value].min() / 100),
@@ -158,6 +158,8 @@ def input_to_datetime(start_date, start_time, end_date, end_time):
 
 
 def hour_rain(df):
+    if df.empty:
+        return df
     df_hour = pd.DataFrame(df.groupby(pd.Grouper(key="inserted_at", freq="1H"))["rain"].sum())
     df_hour = pd.DataFrame({"inserted_at": df_hour.index, "rain": np.ravel(df_hour.values)})
     df_hour["inserted_at"] = df_hour["inserted_at"] + timedelta(hours=1)
@@ -165,10 +167,13 @@ def hour_rain(df):
 
 
 def day_rain(df):
+    if df.empty:
+        return df
     df_day = pd.DataFrame(df.groupby(pd.Grouper(key="inserted_at", freq="1D"))["rain"].sum())
     df_day = pd.DataFrame({"inserted_at": df_day.index, "rain": np.ravel(df_day.values)})
     df_day["inserted_at"] = df_day["inserted_at"] + timedelta(days=1)
-    df_day = pd.concat([df_day, pd.DataFrame.from_dict({"inserted_at": df_day["inserted_at"].min() - timedelta(days=1), "rain": [0]})], ignore_index=True)
+    df_day = pd.concat([df_day, pd.DataFrame.from_dict({"inserted_at": df_day["inserted_at"].min() - timedelta(days=1),
+                                                        "rain": [0]})], ignore_index=True)
     df_day = df_day.sort_values(by=["inserted_at"], axis=0, ascending=True)
     return df_day
 
@@ -240,12 +245,12 @@ def home():
         table=create_table_main(
             (
                 df_last_record["inserted_at"].max(),
-                df_last_record["temperature"].round(2),
-                df_last_record["temperature2"].round(2),
-                (df_last_record["pressure"] / 100).round(2),
+                df_last_record["temperature_bmp280"].round(2),
+                df_last_record["temperature_ds18b20"].round(2),
+                (df_last_record["pressure_bmp280"] / 100).round(2),
                 df_last_record["rain"] * 0.08,
-                df_last_record["humidity"],
-                df_last_record["lux"].round(2),
+                df_last_record["humidity_dht"],
+                df_last_record["light_bh1750"].round(2),
             ),
             "recent-main",
         ),
@@ -297,7 +302,7 @@ def press():
         title="Tlak",
         plot=create_plot_press(df, "press-plot"),
         table=create_table(
-            create_list(df_all_time, df_day, df_week, df_month, "pressure"),
+            create_list(df_all_time, df_day, df_week, df_month, "pressure_bmp280"),
             "press-table",
             "hPa",
         ),
@@ -308,7 +313,7 @@ def press():
         table_recent=create_table_recent(
             (
                 "Aktuálně(hPa)",
-                (df_last_record["pressure"] / 100).round(2),
+                (df_last_record["pressure_bmp280"] / 100).round(2),
                 df_last_record["inserted_at"].max(),
             ),
             "recent-press",
@@ -326,12 +331,12 @@ def temp():
         title="Teplota",
         plot=create_plot_temp(df, "temp-plot"),
         table=create_table(
-            create_list(df_all_time, df_day, df_week, df_month, "temperature"),
+            create_list(df_all_time, df_day, df_week, df_month, "temperature_bmp280"),
             "temp-table",
             "Teploměr °C",
         )
         + create_table(
-            create_list(df_all_time, df_day, df_week, df_month, "temperature2"),
+            create_list(df_all_time, df_day, df_week, df_month, "temperature_ds18b20"),
             "temp2-table",
             "Teploměr (balkon) °C",
         ),
@@ -342,7 +347,7 @@ def temp():
         table_recent=create_table_recent(
             (
                 "Aktuálně(°C)",
-                df_last_record["temperature"].round(2),
+                df_last_record["temperature_ds18b20"].round(2),
                 df_last_record["inserted_at"].max(),
             ),
             "recent-temp",
@@ -360,7 +365,7 @@ def humi():
         title="Vlhkost",
         plot=create_plot_humi(df, "humi-plot"),
         table=create_table(
-            create_list(df_all_time, df_day, df_week, df_month, "humidity"),
+            create_list(df_all_time, df_day, df_week, df_month, "humidity_dht"),
             "humi-table",
             "%",
         ),
@@ -371,7 +376,7 @@ def humi():
         table_recent=create_table_recent(
             (
                 "Aktuálně(%)",
-                df_last_record["humidity"],
+                df_last_record["humidity_dht"],
                 df_last_record["inserted_at"].max(),
             ),
             "recent-humi",
