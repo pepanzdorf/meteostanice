@@ -1,0 +1,25 @@
+<form class="sensor-select">
+    <input type="checkbox" id="anemometer" name="anemometer" {{ sensors[0] }} value="true">
+    <label for="anemometer">anemometer</label><br>
+    <input type="checkbox" id="humidity_dht" name="humidity_dht" {{ sensors[1] }} value="true">
+    <label for="humidity_dht">humidity_dht</label><br>
+    <input type="checkbox" id="light_bh1750" name="light_bh1750" {{ sensors[2] }} value="true">
+    <label for="light_bh1750">light_bh1750</label><br>
+    <input type="checkbox" id="pressure_bmp280" name="pressure_bmp280" {{ sensors[3] }} value="true">
+    <label for="pressure_bmp280">pressure_bmp280</label><br>
+    <input type="checkbox" id="rain" name="rain" {{ sensors[4] }} value="true">
+    <label for="rain">rain</label><br>
+    <input type="checkbox" id="rain_check" name="rain_check" {{ sensors[5] }} value="true">
+    <label for="rain_check">rain_check</label><br>
+    <input type="checkbox" id="solar" name="solar" {{ sensors[6] }} value="true">
+    <label for="solar">solar</label><br>
+    <input type="checkbox" id="temperature_bmp280" name="temperature_bmp280" {{ sensors[7] }} value="true">
+    <label for="temperature_bmp280">temperature_bmp280</label><br>
+    <input type="checkbox" id="temperature_dht" name="temperature_dht" {{ sensors[8] }} value="true">
+    <label for="temperature_dht">temperature_dht</label><br>
+    <input type="checkbox" id="temperature_ds18b20" name="temperature_ds18b20" {{ sensors[9] }} value="true">
+    <label for="temperature_ds18b20">temperature_ds18b20</label><br>
+    <input type="checkbox" id="send_to_server" name="send_to_server" value="true">
+    <label for="send_to_server">send_to_server</label><br>
+    <input id="submit-sensors" type="submit" value="Submit">
+</form>

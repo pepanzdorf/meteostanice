@@ -6,6 +6,7 @@ import psycopg2
 from environment import DB_PASS
 from pytz import timezone
 import numpy as np
+import json
 
 
 app = Flask(__name__)
@@ -414,6 +415,34 @@ def weather_last():
     df = df.where(pd.notnull(df), None)
     df = df.reset_index().to_dict(orient="list")
     return df
+
+
+@app.route("/weatherstation/set_active_sensors")
+def set_active_sensors():
+    with open("sensors.json", "r") as f:
+        sensors = json.load(f)
+        f.close()
+    sensor_states = ["checked" if sensors[sensor] else "" for sensor in sensors]
+
+    if request.args.get("send_to_server", False, type=bool):
+        new_sensor_states = {}
+        for sensor in sensors:
+            new_sensor_states[sensor] = request.args.get(sensor, False, type=bool)
+        with open("sensors.json", "w") as f:
+            json.dump(new_sensor_states, f)
+            f.close()
+
+    return render_template(
+        "sensors_form.html",
+        sensors=sensor_states,
+    )
+
+
+@app.route("/weatherstation/get_active_sensors")
+def get_active_sensors():
+    with open("sensors.json", "r") as f:
+        sensors = json.load(f)
+    return sensors
 
 
 @app.errorhandler(404)
