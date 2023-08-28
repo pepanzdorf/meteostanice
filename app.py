@@ -246,12 +246,12 @@ def home():
         table=create_table_main(
             (
                 df_last_record["inserted_at"].max(),
-                df_last_record["temperature_bmp280"].round(2),
-                df_last_record["temperature_ds18b20"].round(2),
-                (df_last_record["pressure_bmp280"] / 100).round(2),
-                df_last_record["rain"] * 0.08,
+                df_last_record["temperature_bmp280"].round(2) if not df_last_record["temperature_bmp280"].isnull().any() else None,
+                df_last_record["temperature_ds18b20"].round(2) if not df_last_record["temperature_ds18b20"].isnull().any() else None,
+                (df_last_record["pressure_bmp280"] / 100).round(2) if not df_last_record["pressure_bmp280"].isnull().any() else None,
+                df_last_record["rain"] * 0.08 if not df_last_record["rain"].isnull().any() else None,
                 df_last_record["humidity_dht"],
-                df_last_record["light_bh1750"].round(2),
+                df_last_record["light_bh1750"].round(2) if not df_last_record["light_bh1750"].isnull().any() else None,
             ),
             "recent-main",
         ),
@@ -285,7 +285,7 @@ def rain():
         table_recent=create_table_recent(
             (
                 "Aktuálně(mm/5min)",
-                df_last_record["rain"] * 0.08,
+                df_last_record["rain"] * 0.08 if not df_last_record["rain"].isnull().any() else None,
                 df_last_record["inserted_at"].max(),
             ),
             "recent-rain",
@@ -314,7 +314,7 @@ def press():
         table_recent=create_table_recent(
             (
                 "Aktuálně(hPa)",
-                (df_last_record["pressure_bmp280"] / 100).round(2),
+                (df_last_record["pressure_bmp280"] / 100).round(2) if not df_last_record["pressure_bmp280"].isnull().any() else None,
                 df_last_record["inserted_at"].max(),
             ),
             "recent-press",
@@ -348,7 +348,7 @@ def temp():
         table_recent=create_table_recent(
             (
                 "Aktuálně(°C)",
-                df_last_record["temperature_ds18b20"].round(2),
+                df_last_record["temperature_ds18b20"].round(2) if not df_last_record["temperature_ds18b20"].isnull().any() else None,
                 df_last_record["inserted_at"].max(),
             ),
             "recent-temp",
