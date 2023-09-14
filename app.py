@@ -53,9 +53,11 @@ def select_last_record():
         .dt.tz_localize("utc")
         .dt.tz_convert("Europe/Prague")
     )
-    df_last_record["rain"] = df_last_record["rain"].apply(
-        lambda row: 0 if row != 0 and (row / abs(row)) < 0 else row
-    )
+
+    if not df_last_record["rain"].isnull().all():
+        df_last_record["rain"] = df_last_record["rain"].apply(
+            lambda row: 0 if row != 0 and (row / abs(row)) < 0 else row
+        )
     return df_last_record
 
 
