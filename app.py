@@ -32,7 +32,7 @@ def select_timedelta(
         )
         df = df.sort_values(by=["inserted_at"], axis=0, ascending=True)
         df["rain"] = df["rain"].apply(
-            lambda row: 0 if row != 0 and (row / abs(row)) < 0 else row
+            lambda row: None if row is None else 0 if row != 0 and (row / abs(row)) < 0 else row
         )
     return df
 
