@@ -390,12 +390,36 @@ def humi():
 @app.route("/info")
 def info():
     date_args, _, _ = get_user_datetime_input()
+    active_sensors = ""
+    human_readable_sensors = {
+        "temperature_ds18b20": "Teplota (balkon)",
+        "temperature_bmp280": "Teplota (meteostanice)",
+        "humidity_dht": "Relativní vlhkost vzduchu",
+        "pressure_bmp280": "Tlak",
+        "rain": "Srážky",
+        "anemometer": "Rychlost větru",
+        "light_bh1750": "Intenzita světla",
+        "solar": "Osvícení (solarní panel)",
+    }
+    for key, value in get_active_sensors().items():
+        if key in human_readable_sensors:
+            if value:
+                active_sensors += f"{human_readable_sensors[key]}: "
+                active_sensors += '<em style = "color: green;font-style: normal;font-weight: 700;"> Aktivní </em> <br>'
+            else:
+                active_sensors += f"{human_readable_sensors[key]}: "
+                active_sensors += '<em style = "color: red;font-style: normal;font-weight: 700;"> Neaktivní </em> <br>'
+
+    table_replacement_content = f"<img src='/static/meteostanice.png' style='width:384px;height:216px;float: right;'>" \
+                                f"<br>" \
+                                f"<div style='margin:65px; display:inline-block'><h1 style='font-size: 1.1em'> Aktuální aktivita čidel </h1><br>{active_sensors}</div>"
+
     return render_template(
         "template.html",
         date_args=date_args,
         content=INFO,
         title="Info",
-        table="<img src='/static/meteostanice.png' style='width:384px;height:216px;float: right;'>",
+        table=table_replacement_content,
     )
 
 
