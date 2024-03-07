@@ -61,6 +61,51 @@ def select_last_record():
     return df_last_record
 
 
+def select_last_record_print():
+    conn = psycopg2.connect(
+        database="postgres",
+        user="postgres",
+        password=DB_PASS,
+        host="89.221.216.28",
+    )
+    df_last_record = pd.read_sql(
+        "SELECT * FROM tisk.records WHERE inserted_at=(SELECT max(inserted_at) FROM tisk.records);",
+        conn,
+    )
+
+    df_last_record["inserted_at"] = (
+        df_last_record["inserted_at"]
+        .dt.tz_localize("utc")
+        .dt.tz_convert("Europe/Prague")
+    )
+
+    return df_last_record
+
+
+def select_timedelta_print(
+    start=(datetime.utcnow() - timedelta(days=1)), end=datetime.utcnow()
+):
+    conn = psycopg2.connect(
+        database="postgres",
+        user="postgres",
+        password=DB_PASS,
+        host="89.221.216.28",
+    )
+    df = pd.read_sql(
+        "SELECT * FROM tisk.records WHERE inserted_at BETWEEN %(start)s AND %(end)s",
+        conn,
+        params={"start": start, "end": end},
+    )
+
+    if not df.empty:
+        df["inserted_at"] = (
+            df["inserted_at"].dt.tz_localize("utc").dt.tz_convert("Europe/Prague")
+        )
+        df = df.sort_values(by=["inserted_at"], axis=0, ascending=True)
+
+    return df
+
+
 def create_list(df, df_day, df_week, df_month, value):
     if value == "pressure_bmp280":
         return [
@@ -450,6 +495,32 @@ def weather_last():
     return df
 
 
+@app.route("/api/v1/printer/<int:hours>")
+def get_printer_values(hours):
+    df = select_timedelta_print(
+        (datetime.utcnow() - timedelta(hours=hours)), datetime.utcnow()
+    )
+    return json.dumps(
+        [
+            df["temperature"].tolist(),
+            df["humidity"].tolist(),
+            df["inserted_at"].apply(lambda x: x.value / 1000000).tolist(),
+        ]
+    )
+
+
+@app.route("/api/v1/printer/current")
+def get_printer_values_current():
+    df = select_last_record_print()
+    return json.dumps(
+        [
+            df["temperature"][0],
+            df["humidity"][0],
+            df["inserted_at"][0].strftime('%Y-%m-%d %H:%M'),
+        ]
+    )
+
+
 @app.route("/weatherstation/set_active_sensors")
 def set_active_sensors():
     with open("sensors.json", "r") as f:
@@ -476,6 +547,12 @@ def get_active_sensors():
     with open("sensors.json", "r") as f:
         sensors = json.load(f)
     return sensors
+
+
+@app.route("/printer")
+def get_printer_info():
+    hours = request.args.get("hours")
+    return render_template("printer.html", hours=hours if hours is not None else 5)
 
 
 @app.errorhandler(404)
