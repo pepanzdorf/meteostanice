@@ -1,13 +1,17 @@
-CREATE SCHEMA srazkomer;
-CREATE TABLE srazkomer.records (
+CREATE SCHEMA weatherstation;
+CREATE TABLE weatherstation.records (
     id SERIAL,
     inserted_at timestamp,
-    temperature float,
-    pressure float,
+    temperature_bmp280 float,
+    pressure_bmp280 float,
     rain integer,
-    light integer
-    lux float,
+    light_temt6000 integer,
+    light_bh1750 float,
     solar int,
-    humidity int,
-    temperature2 float,
+    humidity_dht float,
+    temperature_ds18b20 float,
+    station_name text,
+    temperature_dht float,
+    anemometer int,
+    rain_check int
 );
