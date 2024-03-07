@@ -563,87 +563,52 @@ def create_table(data, table_name, unit):
 
 
 def create_table_main(value, table_name):
-    fig = make_subplots(
-        rows=1,
-        cols=1,
-        specs=[[{"type": "table"}]],
-    )
+    plot = f"""
+    <table id="{table_name}">
+        <colgroup>
+            <col style="width:22%">
+            <col style="width:26%">
+            <col style="width:26%">
+            <col style="width:26%">
+        </colgroup>  
+        <tr style="height:30px">
+            <th id="time">{value[0].strftime('%Y-%m-%d %H:%M')}</th>
+            <th>Teplota(°C)</th>
+            <th>Teplota-balkon(°C)</th>
+            <th>Tlak(hPa)</th>
+        </tr>
+        <tr style="height:15px">
+            <th>Aktuálně</th>
+            <td id="temperature_value">{value[1][0]}</td>
+            <td id="temperature_balcony_value">{value[2][0]}</td>
+            <td id="pressure_value">{value[3][0]}</td>
+        </tr>
+        <tr style="height:30px">
+            <th></th>
+            <th>Srážky(mm/5min)</th>
+            <th>Relativní vlhkost vzduchu(%)</th>
+            <th>Intenzita světla (lux)</th>
+        </tr>
+        <tr style="height:15px">
+            <th></th>
+            <td id="rain_value">{value[4][0]}</td>
+            <td id="humidity_value">{value[5][0]}</td>
+            <td id="lux_value">{value[6][0]}</td>
+        </tr>
+    </table>
+    """
 
-    fig.add_trace(
-        go.Table(
-            columnwidth=[60, 80],
-            header=dict(
-                values=[
-                    value[0].strftime("%Y-%m-%d %H:%M"),
-                    "Teplota(°C)",
-                    "Teplota-balkon(°C)",
-                    "Tlak(hPa)",
-                ],
-                line_color="black",
-                fill_color="rgb(210, 210, 210)",
-                align="center",
-                height=35,
-            ),
-            cells=dict(
-                values=[
-                    ["Aktuálně", "", ""],
-                    [value[1], "Srážky(mm/5min)", value[4]],
-                    [value[2], "Relativní vlhkost vzduchu(%)", value[5]],
-                    [value[3], "Intenzita světla (lux)", value[6]],
-                ],
-                line_color="black",
-                fill=dict(color=[["rgb(210, 210, 210)"], ["rgb(225, 225, 225)", "rgb(210, 210, 210)"]*2]),
-                align="center",
-                height=35,
-            ),
-        ),
-        row=1,
-        col=1,
-    )
-
-    fig.update_layout(
-        paper_bgcolor="rgba(0,0,0,0)",
-        margin=dict({"t": 60, "b": 5, "r": 5, "l": 5}),
-    )
-
-    config = {"displayModeBar": False}
-
-    plot = fig.to_html(config=config)[56:-16]
-    plot = plot[:4] + f' id="{table_name}"' + plot[4:]
     return plot
 
 
 def create_table_recent(value, table_name):
-    fig = make_subplots(
-        rows=1,
-        cols=1,
-        specs=[[{"type": "table"}]],
-    )
-    fig.add_trace(
-        go.Table(
-            columnwidth=[60, 60],
-            header=dict(
-                values=[
-                    f"{value[0]}<br>{value[2].strftime('%Y-%m-%d %H:%M')}",
-                    value[1],
-                ],
-                line_color="black",
-                fill_color=["rgb(210, 210, 210)", "rgb(225, 225, 225)"],
-                align="center",
-                height=35,
-            ),
-        ),
-        row=1,
-        col=1,
-    )
+    plot = f"""
+    <table id="{table_name}">
+        <tr>
+            <th id="time" style="width:50%">{value[0]}<br>{value[2].strftime('%Y-%m-%d %H:%M')}</th>
+            <td id="value">{value[1][0]}</td>
+        </tr>
+    </table>
+    """
 
-    fig.update_layout(
-        paper_bgcolor="rgba(0,0,0,0)",
-        margin=dict({"t": 5, "b": 5, "r": 5, "l": 5}),
-    )
-
-    config = {"displayModeBar": False}
-
-    plot = fig.to_html(config=config)[56:-16]
-    plot = plot[:4] + f' id="{table_name}"' + plot[4:]
     return plot

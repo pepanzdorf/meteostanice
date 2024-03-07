@@ -257,6 +257,7 @@ def home():
             ),
             "recent-main",
         ),
+        page_id=0,
     )
 
 
@@ -292,6 +293,7 @@ def rain():
             ),
             "recent-rain",
         ),
+        page_id=1,
     )
 
 
@@ -321,6 +323,7 @@ def press():
             ),
             "recent-press",
         ),
+        page_id=2,
     )
 
 
@@ -355,6 +358,7 @@ def temp():
             ),
             "recent-temp",
         ),
+        page_id=3,
     )
 
 
@@ -384,6 +388,7 @@ def humi():
             ),
             "recent-humi",
         ),
+        page_id=4,
     )
 
 
@@ -420,6 +425,7 @@ def info():
         content=INFO,
         title="Info",
         table=table_replacement_content,
+        page_id=5,
     )
 
 
@@ -437,6 +443,7 @@ def weather(hours):
 @app.route("/api/v1/weather/last")
 def weather_last():
     df = select_last_record()
+    df["formatted_date"] = df["inserted_at"].max().strftime('%Y-%m-%d %H:%M')
     df["inserted_at"] = df["inserted_at"].apply(lambda x: x.value / 1000000)
     df = df.where(pd.notnull(df), None)
     df = df.reset_index().to_dict(orient="list")

@@ -73,10 +73,25 @@ BODY {
 
 
 /*** main content ***/
-table {
+table, th, td {
+    font-size: 1em;
+    table-layout: fixed;
     width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #000;
+    margin: 5px 5px 5px 5px;
 }
 
+th {
+    background-color: rgb(210, 210, 210);
+    text-align: center;
+}
+
+td {
+    width:50%;
+    background-color: rgb(225, 225, 225);
+    text-align: center;
+}
 
 #center-box {
     width: 100%;
@@ -180,11 +195,13 @@ button#today:hover {
 }
 
 #recent-main {
-    height: 300px;
+    height: 200px;
+    margin-bottom: 50px;
 }
 
 #recent-rain, #recent-press, #recent-temp, #recent-humi {
-    height: 80px;
+    height: 60px;
+    width: 440px;
 }
 
 /*** footer ***/
