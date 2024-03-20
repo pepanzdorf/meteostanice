@@ -567,10 +567,15 @@ def page_not_found(error):
     )
 
 
-@app.route('/cam', methods=['POST'])
+@app.route('/cam', methods=['GET', 'POST'])
 def cam():
     if request.method == 'POST':
-        data = request.data
-        return data
+        with open("payload.txt", "w") as f:
+            f.write(request.data.decode("utf-8"))
+            f.close()
+        return "OK"
+    elif request.method == 'GET':
+        with open("payload.txt", "r") as f:
+            return f.read()
 
-    return "INVALID REQUEST"
+    return "KO"
