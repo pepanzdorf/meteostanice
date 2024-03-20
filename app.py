@@ -571,7 +571,7 @@ def page_not_found(error):
 def cam():
     if request.method == 'POST':
         with open("payload.txt", "w") as f:
-            f.write(request.data.decode("utf-8"))
+            f.write(request.get_data().decode("utf-8"))
             f.close()
         return "OK"
     elif request.method == 'GET':
