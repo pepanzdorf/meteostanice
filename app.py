@@ -565,3 +565,12 @@ def page_not_found(error):
         ),
         404,
     )
+
+
+@app.route('/cam', methods=['POST'])
+def cam():
+    if request.method == 'POST':
+        data = request.data
+        return data
+
+    return "INVALID REQUEST"
