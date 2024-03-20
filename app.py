@@ -570,12 +570,11 @@ def page_not_found(error):
 @app.route('/cam', methods=['GET', 'POST'])
 def cam():
     if request.method == 'POST':
-        with open("payload.txt", "w") as f:
-            f.write(request.get_data().decode("utf-8"))
-            f.close()
+        request.files["image"].save("static/cam.jpg")
         return "OK"
     elif request.method == 'GET':
-        with open("payload.txt", "r") as f:
-            return f.read()
+        return """
+        <img src="static/cam.jpg" style="width:100%;height:100%;">
+        """
 
     return "KO"
