@@ -565,16 +565,3 @@ def page_not_found(error):
         ),
         404,
     )
-
-
-@app.route('/cam', methods=['GET', 'POST'])
-def cam():
-    if request.method == 'POST':
-        request.files["image"].save("static/cam.jpg")
-        return "OK"
-    elif request.method == 'GET':
-        return """
-        <img src="static/cam.jpg" style="width:100%;height:100%;">
-        """
-
-    return "KO"
