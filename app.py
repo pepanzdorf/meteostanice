@@ -1,15 +1,35 @@
+import os
+import subprocess
+
+import flask
 from flask import Flask, render_template, redirect, request
+from flask_httpauth import HTTPBasicAuth
+from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 from plot import *
 import pandas as pd
 from datetime import datetime, timedelta
+from pathlib import Path
 import psycopg2
-from environment import DB_PASS
+from environment import DB_PASS, PRINTER_PASS
 from pytz import timezone
 import numpy as np
 import json
 
 
 app = Flask(__name__)
+auth = HTTPBasicAuth()
+
+users = {
+    "guest": generate_password_hash(PRINTER_PASS),
+}
+
+
+@auth.verify_password
+def verify_password(username, password):
+    if username in users:
+        if check_password_hash(users.get(username), password):
+            return username
 
 
 def select_timedelta(
@@ -565,3 +585,33 @@ def page_not_found(error):
         ),
         404,
     )
+
+
+@app.route('/cam/upload', methods=['POST'])
+def cam_upload():
+    if request.method == 'POST':
+        path_to_images = Path("images")
+        filename = path_to_images / secure_filename(f"{request.files['image'].filename}_{datetime.utcnow().strftime('%Y_%m_%d_%H_%M_%S')}.jpg")
+        request.files["image"].save(filename)
+        subprocess.run(f"cp {filename} static/latest.jpg", shell=True, text=True)
+        result = subprocess.run(f"mega-put {filename.absolute()} PrinterImages", shell=True, text=True)
+        print(result.returncode)
+        os.remove(filename)
+        return "OK"
+
+    return "KO"
+
+
+@app.route('/cam/stream', methods=['GET'])
+@auth.login_required
+def cam_stream():
+    resp = flask.Response("""
+    <img src="/static/latest.jpg" id="image" style="width:1280;height:720;">
+    <script>
+        setInterval(function() {
+            document.getElementById('image').src = '/static/latest.jpg#' + new Date().getTime();
+        }, 2000);
+    </script>
+    """)
+    resp.headers["Cache-Control"] = "max-age=0, must-revalidate"
+    return resp
