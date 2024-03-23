@@ -11,7 +11,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 from pathlib import Path
 import psycopg2
-from environment import DB_PASS, PRINTER_PASS
+from environment import DB_PASS
 from pytz import timezone
 import numpy as np
 import json
@@ -21,7 +21,7 @@ app = Flask(__name__)
 auth = HTTPBasicAuth()
 
 users = {
-    "guest": generate_password_hash(PRINTER_PASS),
+    "guest": generate_password_hash("chcividettisk"),
 }
 
 
