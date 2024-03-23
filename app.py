@@ -604,12 +604,13 @@ def cam_upload():
 @app.route('/cam/stream', methods=['GET'])
 @auth.login_required
 def cam_stream():
-    resp = flask.Response("""
+    resp = flask.Response(f"""
     <img src="/static/latest.jpg" id="image" style="width:1280;height:720;">
+    <p>{datetime.fromtimestamp(os.path.getmtime("static/latest.jpg"))}</p>
     <script>
-        setInterval(function() {
+        setInterval(function() {{
             document.getElementById('image').src = '/static/latest.jpg#' + new Date().getTime();
-        }, 2000);
+        }}, 2000);
     </script>
     """)
     resp.headers["Cache-Control"] = "max-age=0, must-revalidate"
