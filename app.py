@@ -595,7 +595,6 @@ def cam_upload():
         request.files["image"].save(filename)
         subprocess.run(f"cp {filename} static/latest.jpg", shell=True, text=True)
         result = subprocess.run(f"mega-put {filename.absolute()} PrinterImages", shell=True, text=True)
-        print(result.returncode)
         os.remove(filename)
         return "OK"
 
