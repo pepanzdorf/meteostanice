@@ -606,10 +606,11 @@ def cam_upload():
 def cam_stream():
     resp = flask.Response(f"""
     <img src="/static/latest.jpg" id="image" style="width:1280;height:720;">
-    <p>{datetime.fromtimestamp(os.path.getmtime("static/latest.jpg"))}</p>
+    <p id="time">{datetime.fromtimestamp(os.path.getmtime("static/latest.jpg"))}</p>
     <script>
         setInterval(function() {{
             document.getElementById('image').src = '/static/latest.jpg#' + new Date().getTime();
+            document.getElementById('time').innerHTML = {datetime.fromtimestamp(os.path.getmtime("static/latest.jpg"))};
         }}, 2000);
     </script>
     """)
