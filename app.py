@@ -611,4 +611,6 @@ def cam_upload():
 def cam_stream():
     resp = flask.Response(open("content/cam.html", "r").read())
     resp.headers["Cache-Control"] = "no-cache, must-revalidate, no-store"
+    resp.headers['Pragma'] = 'no-cache'
+    resp.headers['Expires'] = '0'
     return resp
