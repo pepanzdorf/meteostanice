@@ -591,11 +591,16 @@ def page_not_found(error):
 def cam_upload():
     if request.method == 'POST':
         path_to_images = Path("images")
-        filename = path_to_images / secure_filename(f"{request.files['image'].filename}_{datetime.utcnow().strftime('%Y_%m_%d_%H_%M_%S')}.jpg")
+        now = datetime.utcnow()
+        filename = path_to_images / secure_filename(f"{request.files['image'].filename}_{now.strftime('%Y_%m_%d_%H_%M_%S')}.jpg")
         request.files["image"].save(filename)
         subprocess.run(f"cp {filename} static/latest.jpg", shell=True, text=True)
         result = subprocess.run(f"mega-put {filename.absolute()} PrinterImages", shell=True, text=True)
         os.remove(filename)
+        with open("static/meta.txt", "w") as f:
+            f.write(now.strftime("%Y-%m-%d %H:%M:%S"))
+            f.close()
+
         return "OK"
 
     return "KO"
@@ -604,14 +609,6 @@ def cam_upload():
 @app.route('/cam/stream', methods=['GET'])
 @auth.login_required
 def cam_stream():
-    resp = flask.Response(f"""
-    <img src="/static/latest.jpg" id="image" style="width:1280;height:720;">
-    <p id="time">{datetime.fromtimestamp(os.path.getmtime("static/latest.jpg")).strftime("%Y-%m-%d %H:%M:%S")}</p>
-    <script>
-        setInterval(function() {{
-            document.getElementById('image').src = '/static/latest.jpg#' + new Date().getTime();
-        }}, 2000);
-    </script>
-    """)
+    resp = flask.Response(open("content/cam.html", "r").read())
     resp.headers["Cache-Control"] = "max-age=0, must-revalidate, no-store"
     return resp

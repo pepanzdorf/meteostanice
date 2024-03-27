@@ -1,0 +1,21 @@
+<img src="/static/latest.jpg" id="image" style="width:1280px;height:720px;" alt="cam image">
+<p id="currentTime"></p>
+<p id="imageTime"></p>
+<script>
+    function lastImageTime() {
+        fetch('/static/meta.txt')
+            .then(response => response.text())
+            .then(text => {
+                document.getElementById('imageTime').innerText = "Latest image taken at: " + text;
+            })
+            .catch(error => {
+                console.error('Error fetching file:', error);
+        });
+    }
+        
+    setInterval(function() {
+        document.getElementById('image').src = '/static/latest.jpg#' + new Date().getTime();
+        lastImageTime();
+        document.getElementById('currentTime').innerText = "Last check at: " + new Date().toISOString().slice(0, 19).replace('T', ' ');
+    }, 2000);
+</script>
