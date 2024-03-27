@@ -610,5 +610,5 @@ def cam_upload():
 @auth.login_required
 def cam_stream():
     resp = flask.Response(open("content/cam.html", "r").read())
-    resp.headers["Cache-Control"] = "max-age=0, must-revalidate, no-store"
+    resp.headers["Cache-Control"] = "no-cache, must-revalidate, no-store"
     return resp
