@@ -3,7 +3,7 @@
 <p id="imageTime"></p>
 <script>
     function lastImageTime() {
-        fetch('/static/meta.txt')
+        fetch('/static/meta.txt#' + new Date().getTime())
             .then(response => response.text())
             .then(text => {
                 document.getElementById('imageTime').innerText = "Latest image taken at: " + text;
