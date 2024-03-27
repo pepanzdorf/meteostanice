@@ -15,7 +15,7 @@
     <div id="content-container">
         <h1>Printer Camera Stream</h1>
         <div style="float:left; width:80%; border:2px solid black;box-sizing: border-box;">
-            <img style="margin-left:auto; margin-right:auto; display: block;"src="" id="image" alt="cam image">
+            <img style="margin-left:auto; margin-right:auto; display: block;max-width: 100%;" src="" id="image" alt="cam image">
         </div>
         <div style="float:left; width:20%;box-sizing: border-box; padding-left: 50px;">
             <p id="currentTime"></p>
@@ -34,8 +34,8 @@
             .then(response => response.json())
             .then(data => {
                 document.getElementById('image').src = 'data:image/png;base64,' + data['image'];
-                document.getElementById('currentTime').innerHTML = 'Current time: ' + new Date().toISOString().slice(0, 19).replace('T', ' ');
-                document.getElementById('imageTime').innerHTML = 'Image time: ' + data['image_date'];
+                document.getElementById('currentTime').innerHTML = 'Last poll time: ' + new Date().toISOString().slice(0, 19).replace('T', ' ');
+                document.getElementById('imageTime').innerHTML = 'Latest image time: ' + data['image_date'];
             });
     }
     updateImage();
