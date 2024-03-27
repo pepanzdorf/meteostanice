@@ -15,6 +15,7 @@ from environment import DB_PASS
 from pytz import timezone
 import numpy as np
 import json
+import base64
 
 
 app = Flask(__name__)
@@ -288,6 +289,7 @@ HOME = read_content("home")
 INFO = read_content("info")
 RAIN = read_content("rain")
 RADIO = read_content("radio")
+CAM = read_content("cam")
 
 
 @app.route("/")
@@ -609,8 +611,17 @@ def cam_upload():
 @app.route('/cam/stream', methods=['GET'])
 @auth.login_required
 def cam_stream():
-    resp = flask.Response(open("content/cam.html", "r").read())
-    resp.headers["Cache-Control"] = "no-cache, must-revalidate, no-store"
-    resp.headers['Pragma'] = 'no-cache'
-    resp.headers['Expires'] = '0'
-    return resp
+    return CAM
+
+
+@app.route('/cam/stream/image', methods=['GET'])
+@auth.login_required
+def cam_stream_image():
+    json_data = {}
+
+    with open("static/latest.jpg", "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read())
+        json_data["image"] = encoded_string.decode("utf-8")
+    json_data["image_date"] = datetime.fromtimestamp(os.path.getmtime("static/latest.jpg")).strftime("%Y-%m-%d %H:%M:%S")
+
+    return json.dumps(json_data)
