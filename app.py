@@ -613,5 +613,5 @@ def cam_stream():
         }}, 2000);
     </script>
     """)
-    resp.headers["Cache-Control"] = "max-age=0, must-revalidate"
+    resp.headers["Cache-Control"] = "max-age=0, must-revalidate, no-store"
     return resp
