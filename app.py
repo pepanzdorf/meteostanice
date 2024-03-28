@@ -599,10 +599,6 @@ def cam_upload():
         subprocess.run(f"cp {filename} static/latest.jpg", shell=True, text=True)
         result = subprocess.run(f"mega-put {filename.absolute()} PrinterImages", shell=True, text=True)
         os.remove(filename)
-        with open("static/meta.txt", "w") as f:
-            f.write(now.strftime("%Y-%m-%d %H:%M:%S"))
-            f.close()
-
         return "OK"
 
     return "KO"
