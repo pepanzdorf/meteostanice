@@ -594,10 +594,12 @@ def cam_upload():
     if request.method == 'POST':
         path_to_images = Path("images")
         now = datetime.utcnow()
-        filename = path_to_images / secure_filename(f"{request.files['image'].filename}_{now.strftime('%Y_%m_%d_%H_%M_%S')}.jpg")
+        sent_by, save = request.form["meta"].split(" ")
+        filename = path_to_images / secure_filename(f"{request.files['image'].filename}_{sent_by.lower()}_{now.strftime('%Y_%m_%d_%H_%M_%S')}.jpg")
         request.files["image"].save(filename)
         subprocess.run(f"cp {filename} static/latest.jpg", shell=True, text=True)
-        result = subprocess.run(f"mega-put {filename.absolute()} PrinterImages", shell=True, text=True)
+        if sent_by != "WEB" and save == "1":
+            result = subprocess.run(f"mega-put {filename.absolute()} PrinterImages", shell=True, text=True)
         os.remove(filename)
         return "OK"
 
