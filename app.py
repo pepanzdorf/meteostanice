@@ -577,6 +577,16 @@ def get_printer_info():
     return render_template("printer.html", hours=hours if hours is not None else 5)
 
 
+@app.route('/printer/set_info', methods=['GET'])
+def set_printer_values():
+    if request.method == 'GET':
+        with open("static/printer.json", "w") as f:
+            json.dump(request.json, f)
+            f.close()
+        return "OK"
+    return "KO"
+
+
 @app.errorhandler(404)
 def page_not_found(error):
     return (
@@ -595,7 +605,13 @@ def cam_upload():
         path_to_images = Path("images")
         now = datetime.utcnow()
         sent_by, save = request.form["meta"].split(" ")
-        filename = path_to_images / secure_filename(f"{request.files['image'].filename}_{sent_by.lower()}_{now.strftime('%Y_%m_%d_%H_%M_%S')}.jpg")
+        with open("static/printer.json", "r") as f:
+            printer = json.load(f)
+            f.close()
+        job_name = printer["file"]["display_name"]
+        if sent_by == "WEB":
+            job_name = "manual"
+        filename = path_to_images / secure_filename(f"{job_name}_{sent_by.lower()}_{now.strftime('%Y_%m_%d_%H_%M_%S')}.jpg")
         request.files["image"].save(filename)
         subprocess.run(f"cp {filename} static/latest.jpg", shell=True, text=True)
         if sent_by != "WEB" and save == "1":
