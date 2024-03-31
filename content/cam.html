@@ -20,6 +20,12 @@
         <div style="float:left; width:20%;box-sizing: border-box; padding-left: 50px;">
             <p id="currentTime"></p>
             <p id="imageTime"></p>
+            <p id="timeElapsed"></p>
+            <p id="timeRemaining"></p>
+            <p id="progress"></p>
+            <div id="progress-bar" style="width: 90%; height: 25px; border: black solid;">
+                <div id="progress-bar-fill" style="width: 0%; background-color: red; height: 100%;"></div>
+            </div>
         </div>
 
     </div>
@@ -34,10 +40,38 @@
             .then(response => response.json())
             .then(data => {
                 document.getElementById('image').src = 'data:image/png;base64,' + data['image'];
-                document.getElementById('currentTime').innerHTML = 'Last poll time: ' + new Date().toISOString().slice(0, 19).replace('T', ' ');
+                document.getElementById('currentTime').innerHTML = 'Last poll time: ' + formatDateTime(new Date());
                 document.getElementById('imageTime').innerHTML = 'Latest image time: ' + data['image_date'];
+                document.getElementById('timeElapsed').innerHTML = 'Time elapsed: ' + secondsToHMS(data['time_printing']);
+                document.getElementById('timeRemaining').innerHTML = 'Time remaining: ' + secondsToHMS(data['time_remaining']);
+                document.getElementById('progress').innerHTML = 'Progress: ' + data['progress'] + '%';
+                document.getElementById('progress-bar-fill').style.width = data['progress'] + '%';
             });
     }
+    function secondsToHMS(seconds) {
+        let hours = Math.floor(seconds / 3600);
+        let minutes = Math.floor((seconds % 3600) / 60);
+        let remainingSeconds = seconds % 60;
+
+        let formattedHours = ('0' + hours).slice(-2);
+        let formattedMinutes = ('0' + minutes).slice(-2);
+        let formattedSeconds = ('0' + remainingSeconds).slice(-2);
+
+        return formattedHours + ':' + formattedMinutes + ':' + formattedSeconds;
+    }
+
+    function formatDateTime(date) {
+        let year = date.getFullYear();
+        let month = ('0' + (date.getMonth() + 1)).slice(-2); // Add leading zero if needed
+        let day = ('0' + date.getDate()).slice(-2); // Add leading zero if needed
+
+        let hour = ('0' + date.getHours()).slice(-2); // Add leading zero if needed
+        let minute = ('0' + date.getMinutes()).slice(-2); // Add leading zero if needed
+        let second = ('0' + date.getSeconds()).slice(-2); // Add leading zero if needed
+
+        return year + '-' + month + '-' + day + ' ' + hour + ':' + minute + ':' + second;
+    }
+
     updateImage();
     setInterval(updateImage, 2000);
 </script>

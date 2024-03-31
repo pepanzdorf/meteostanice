@@ -637,5 +637,12 @@ def cam_stream_image():
         encoded_string = base64.b64encode(image_file.read())
         json_data["image"] = encoded_string.decode("utf-8")
     json_data["image_date"] = datetime.fromtimestamp(os.path.getmtime("static/latest.jpg")).strftime("%Y-%m-%d %H:%M:%S")
+    with open("static/printer.json", "r") as f:
+        printer = json.load(f)
+        f.close()
+    json_data["job_name"] = printer["file"]["display_name"]
+    json_data["time_remaining"] = printer["time_remaining"]
+    json_data["time_printing"] = printer["time_printing"]
+    json_data["progress"] = printer["progress"]
 
     return json.dumps(json_data)
