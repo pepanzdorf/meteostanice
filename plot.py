@@ -579,9 +579,9 @@ def create_table_main(value, table_name):
         </tr>
         <tr style="height:15px">
             <th>Aktuálně</th>
-            <td id="temperature_value">{value[1][0]}</td>
-            <td id="temperature_balcony_value">{value[2][0]}</td>
-            <td id="pressure_value">{value[3][0]}</td>
+            <td id="temperature_value">{value[1][0] if value[1] is not None else "null"}</td>
+            <td id="temperature_balcony_value">{value[2][0] if value[2] is not None else "null"}</td>
+            <td id="pressure_value">{value[3][0] if value[3] is not None else "null"}</td>
         </tr>
         <tr style="height:30px">
             <th></th>
@@ -591,9 +591,9 @@ def create_table_main(value, table_name):
         </tr>
         <tr style="height:15px">
             <th></th>
-            <td id="rain_value">{value[4][0]}</td>
-            <td id="humidity_value">{value[5][0]}</td>
-            <td id="lux_value">{value[6][0]}</td>
+            <td id="rain_value">{value[4][0] if value[4] is not None else "null"}</td>
+            <td id="humidity_value">{value[5][0] if value[5] is not None else "null"}</td>
+            <td id="lux_value">{value[6][0] if value[6] is not None else "null"}</td>
         </tr>
     </table>
     """
