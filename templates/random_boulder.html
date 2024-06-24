@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="CS">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Náhodný boulder</title>
+</head>
+<body>
+    <div style="width: 80%; display: flex; margin: 0 auto">
+        <div id="left" style="flex: 50%;">
+            <label for="grades" style="margin-bottom: 10px">Zvolte obtížnosti V stupnice (čísla oddělená mezerou):</label><br>
+            <input type="text" id="grades" name="grades" placeholder="2 4 5" style="margin-bottom: 10px"><br>
+            <label for="angle" style="margin-bottom: 10px">Zvolte úhel stěny:</label><br>
+            <input type="text" id="angle" name="angle" value="20" style="margin-bottom: 10px"><br>
+            <button onclick="climb();" style="margin-bottom: 10px">Náhodný boulder</button>
+            <p id="chosen_grades"></p>
+            <p id="chosen_angle"></p>
+            <p id="boulders_sc"></p>
+        </div>
+        <div id="right" style="flex: 50%;">
+            <h2>Vybraný boulder:</h2>
+            <p id="boulder"></p>
+            <p id="grade"></p>
+            <button onclick="copyToClipboard();">Zkopírovat jméno</button>
+        </div>
+
+
+    </div>
+
+</body>
+    <script>
+        const a = '{{ boulders | safe }}';
+        const boulders = JSON.parse('{{ boulders | safe }}');
+
+        function getRandomBoulder(boulders, grades) {
+            let chosenBoulders = grades.reduce((acc, grade) => {
+                if (boulders[grade]) {
+                    acc.push(...boulders[grade]);
+                }
+                return acc;
+            }, []);
+
+            const possibleBoulders = chosenBoulders.length;
+
+            if (possibleBoulders === 0) {
+                return [0, null];
+            }
+
+            const randomIndex = Math.floor(Math.random() * chosenBoulders.length);
+
+            return [possibleBoulders, chosenBoulders[randomIndex]];
+        }
+
+        function parseInputGrades() {
+            const grades = document.getElementById('grades').value;
+
+            const gradesArray = grades.split(' ').map(grade => parseInt(grade)).filter(grade => !isNaN(grade));
+            if (gradesArray.length === 0) {
+                return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+            }
+
+            return gradesArray;
+        }
+
+        function climb() {
+            const grades = parseInputGrades();
+            const angle = getAngle();
+            let [possibleBoulders, boulder] = [0, null];
+            document.getElementById('boulder').innerText = "";
+            document.getElementById('grade').innerText = "";
+            if (boulders[angle]) {
+                const correctAngleBoulders = boulders[angle];
+                [possibleBoulders, boulder] = getRandomBoulder(correctAngleBoulders, grades);
+                document.getElementById('boulder').innerText = boulder["name"];
+                document.getElementById('grade').innerText = "Obtížnost: V" + boulder["grade"];
+            }
+            document.getElementById('chosen_grades').innerText = "Zvolené obtížnosti: " + grades.map(num => `V${num}`).join(' ');
+            document.getElementById('chosen_angle').innerText = "Zvolený úhel stěny: " + angle + "°";
+            document.getElementById('boulders_sc').innerText = "Počet možných boulderů: " + possibleBoulders;
+        }
+
+        function getAngle() {
+            const angle = parseInt(document.getElementById('angle').value);
+            if (isNaN(angle)) {
+                return 20;
+            }
+            return angle;
+        }
+
+        function copyToClipboard() {
+          const copyText = document.getElementById("boulder").innerText;
+
+          navigator.clipboard.writeText(copyText);
+        }
+    </script>
+</html>

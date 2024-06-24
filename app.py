@@ -646,3 +646,28 @@ def cam_stream_image():
     json_data["progress"] = printer["progress"]
 
     return json.dumps(json_data)
+
+
+@app.route('/climbing/random', methods=['GET'])
+def climbing_random():
+    conn = psycopg2.connect(
+        database="postgres",
+        user="postgres",
+        password=DB_PASS,
+        host="89.221.216.28",
+    )
+    df = pd.read_sql(
+        "SELECT * FROM climbing.boulders",
+        conn,
+    )
+
+    by_angle = df.groupby("angle")
+    data = {}
+    for angle, a_group in by_angle:
+        by_grade = a_group.groupby("grade")
+        data[angle] = {}
+        for grade, g_group in by_grade:
+            g_group["name"] = g_group["name"].apply(lambda x: x.replace('"', '\\"'))
+            data[angle][grade] = g_group.to_dict(orient="records")
+
+    return render_template("random_boulder.html", boulders=json.dumps(data))
