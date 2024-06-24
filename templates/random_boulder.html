@@ -16,9 +16,10 @@
         flex: 1;
         padding: 20px;
         box-sizing: border-box;
+        background-color: #e3e3e3;
     }
 
-    @media screen and (max-width: 600px) {
+    @media screen and (max-width: 900px) {
         .section {
             flex-basis: 100%;
         }
@@ -42,6 +43,10 @@
             <p id="boulder"></p>
             <p id="grade"></p>
             <button onclick="copyToClipboard();">Zkopírovat jméno</button>
+        </div>
+        <div class="section">
+            <h2>Počty boulderů</h2>
+            {{ n_boulders | safe}}
         </div>
     </div>
 
@@ -80,7 +85,7 @@
             return gradesArray;
         }
 
-        function climb() {
+        async function climb() {
             const grades = parseInputGrades();
             const angle = getAngle();
             let [possibleBoulders, boulder] = [0, null];
@@ -88,9 +93,13 @@
             document.getElementById('grade').innerText = "";
             if (boulders[angle]) {
                 const correctAngleBoulders = boulders[angle];
-                [possibleBoulders, boulder] = getRandomBoulder(correctAngleBoulders, grades);
-                document.getElementById('boulder').innerText = boulder["name"];
-                document.getElementById('grade').innerText = "Obtížnost: V" + boulder["grade"];
+                const k = Math.floor(10 + Math.random() * 15);
+                for (let i = 1; i <= k; i++) {
+                    [possibleBoulders, boulder] = getRandomBoulder(correctAngleBoulders, grades);
+                    document.getElementById('boulder').innerText = boulder["name"];
+                    document.getElementById('grade').innerText = "Obtížnost: V" + boulder["grade"];
+                    await new Promise(r => setTimeout(r, 15*i));
+                }
             }
             document.getElementById('chosen_grades').innerText = "Zvolené obtížnosti: " + grades.map(num => `V${num}`).join(' ');
             document.getElementById('chosen_angle').innerText = "Zvolený úhel stěny: " + angle + "°";

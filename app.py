@@ -661,13 +661,18 @@ def climbing_random():
         conn,
     )
 
+    html_counts_unordered_list = "<ul>"
     by_angle = df.groupby("angle")
     data = {}
     for angle, a_group in by_angle:
+        html_counts_unordered_list += f"<li>{angle}˚: {len(a_group)}</li><ul>"
         by_grade = a_group.groupby("grade")
         data[angle] = {}
         for grade, g_group in by_grade:
+            html_counts_unordered_list += f"<li>V{grade}: {len(g_group)}</li>"
             g_group["name"] = g_group["name"].apply(lambda x: x.replace('"', '\\"'))
             data[angle][grade] = g_group.to_dict(orient="records")
+        html_counts_unordered_list += "</ul>"
+    html_counts_unordered_list += "</ul>"
 
-    return render_template("random_boulder.html", boulders=json.dumps(data))
+    return render_template("random_boulder.html", boulders=json.dumps(data), n_boulders=html_counts_unordered_list)
