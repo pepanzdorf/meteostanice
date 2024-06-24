@@ -4,10 +4,30 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Náhodný boulder</title>
+    <style>
+    .container {
+        display: flex;
+        flex-wrap: wrap;
+        margin: 0 auto;
+        width: 80%;
+    }
+
+    .section {
+        flex: 1;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+
+    @media screen and (max-width: 600px) {
+        .section {
+            flex-basis: 100%;
+        }
+    }
+    </style>
 </head>
 <body>
-    <div style="width: 80%; display: flex; margin: 0 auto">
-        <div id="left" style="flex: 50%;">
+    <div class="container">
+        <div class="section">
             <label for="grades" style="margin-bottom: 10px">Zvolte obtížnosti V stupnice (čísla oddělená mezerou):</label><br>
             <input type="text" id="grades" name="grades" placeholder="2 4 5" style="margin-bottom: 10px"><br>
             <label for="angle" style="margin-bottom: 10px">Zvolte úhel stěny:</label><br>
@@ -17,14 +37,12 @@
             <p id="chosen_angle"></p>
             <p id="boulders_sc"></p>
         </div>
-        <div id="right" style="flex: 50%;">
+        <div class="section">
             <h2>Vybraný boulder:</h2>
             <p id="boulder"></p>
             <p id="grade"></p>
             <button onclick="copyToClipboard();">Zkopírovat jméno</button>
         </div>
-
-
     </div>
 
 </body>
