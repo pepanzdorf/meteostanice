@@ -45,6 +45,29 @@
             <button onclick="copyToClipboard();">Zkopírovat jméno</button>
         </div>
         <div class="section">
+            <label for="challenges" style="margin-bottom: 10px">Zvolte počet výzev:</label><br>
+            <input type="number" id="challenges" name="challenges" value="1" style="margin-bottom: 10px" min="0"><br>
+            <button onclick="challenge();" style="margin-bottom: 10px">Náhodné výzvy</button><br>
+            <input type="checkbox" id="campus" name="campus" class="challenge"/>
+            <label for="campus">Campus</label><br>
+            <input type="checkbox" id="left_leg" name="left_leg" class="challenge"/>
+            <label for="left_leg">Bez levé nohy</label><br>
+            <input type="checkbox" id="right_leg" name="right_leg" class="challenge"/>
+            <label for="right_leg">Bez pravé nohy</label><br>
+            <input type="checkbox" id="left_hand" name="left_hand" class="challenge"/>
+            <label for="left_hand">Bez levé ruky</label><br>
+            <input type="checkbox" id="right_hand" name="right_hand" class="challenge"/>
+            <label for="right_hand">Bez pravé ruky</label><br>
+            <input type="checkbox" id="less_holds" name="less_holds" class="challenge"/>
+            <label for="less_holds">Odebrat chyt</label><br>
+            <input type="checkbox" id="fingers" name="fingers" class="challenge"/>
+            <label for="fingers">Pouze tři prsty na každé ruce</label><br>
+            <input type="checkbox" id="no_shoes" name="no_shoes" class="challenge"/>
+            <label for="no_shoes">Bez lezeček</label><br>
+            <input type="checkbox" id="no_chalk" name="no_chalk" class="challenge"/>
+            <label for="no_chalk">Bez mága</label>
+        </div>
+        <div class="section">
             <h2>Počty boulderů</h2>
             {{ n_boulders | safe}}
         </div>
@@ -54,6 +77,7 @@
     <script>
         const a = '{{ boulders | safe }}';
         const boulders = JSON.parse('{{ boulders | safe }}');
+        const challenges = document.getElementsByClassName('challenge');
 
         function getRandomBoulder(boulders, grades) {
             let chosenBoulders = grades.reduce((acc, grade) => {
@@ -93,12 +117,12 @@
             document.getElementById('grade').innerText = "";
             if (boulders[angle]) {
                 const correctAngleBoulders = boulders[angle];
-                const k = Math.floor(10 + Math.random() * 15);
+                const k = Math.floor(5 + Math.random() * 10);
                 for (let i = 1; i <= k; i++) {
                     [possibleBoulders, boulder] = getRandomBoulder(correctAngleBoulders, grades);
                     document.getElementById('boulder').innerText = boulder["name"];
                     document.getElementById('grade').innerText = "Obtížnost: V" + boulder["grade"];
-                    await new Promise(r => setTimeout(r, 15*i));
+                    await new Promise(r => setTimeout(r, 10*i));
                 }
             }
             document.getElementById('chosen_grades').innerText = "Zvolené obtížnosti: " + grades.map(num => `V${num}`).join(' ');
@@ -119,5 +143,26 @@
 
           navigator.clipboard.writeText(copyText);
         }
+
+        function challenge() {
+            for (let challenge of challenges) {
+                if (challenge.checked) {
+                    document.getElementById(challenge.id).checked = false;
+                }
+            }
+
+            // Choose random challenges
+            let nChallenges = parseInt(document.getElementById('challenges').value);
+            nChallenges = Math.min(nChallenges, challenges.length);
+            const chosenChallenges = [];
+            while (chosenChallenges.length < nChallenges) {
+                const randomIndex = Math.floor(Math.random() * challenges.length);
+                if (!chosenChallenges.includes(randomIndex)) {
+                    chosenChallenges.push(randomIndex);
+                    document.getElementById(challenges[randomIndex].id).checked = true;
+                }
+            }
+        }
+
     </script>
 </html>
