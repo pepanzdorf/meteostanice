@@ -16,6 +16,7 @@ from pytz import timezone
 import numpy as np
 import json
 import base64
+import jwt
 
 
 app = Flask(__name__)
@@ -24,6 +25,32 @@ auth = HTTPBasicAuth()
 users = {
     "guest": generate_password_hash("chcividettisk"),
 }
+
+SECRET = "hahatajne"
+
+
+def token_required(f):
+    def decorated(*args, **kwargs):
+        token = None
+
+        if 'Authorization' in request.headers:
+            token = request.headers['Authorization'].split(" ")[1]
+
+        if not token:
+            return {"message": "Token is missing."}, 401
+
+        try:
+            if token == "token":
+                return f({"username": "Nepřihlášen", "admin": False}, *args, **kwargs)
+            user = jwt.decode(token, SECRET, algorithms=['HS256'])
+        except jwt.ExpiredSignatureError:
+            return {"message": 'Token has expired!'}, 401
+        except jwt.InvalidTokenError:
+            return {"message": 'Invalid token!'}, 401
+
+        return f(user, *args, **kwargs)
+
+    return decorated
 
 
 @auth.verify_password
@@ -676,3 +703,149 @@ def climbing_random():
     html_counts_unordered_list += "</ul>"
 
     return render_template("random_boulder.html", boulders=json.dumps(data), n_boulders=html_counts_unordered_list)
+
+
+@app.route('/climbing/boulders/<int:angle>', methods=['GET'])
+def climbing_boulders(angle):
+    conn = psycopg2.connect(
+        database="postgres",
+        user="postgres",
+        password=DB_PASS,
+        host="89.221.216.28",
+    )
+    angle = int(angle)
+    df = pd.read_sql(
+        f"""
+        SELECT
+            b.id,
+            b.name,
+            b.description,
+            b.build_time,
+            COALESCE(AVG(s.grade), -1) as average_grade,
+            COALESCE(AVG(s.rating), -1) as average_rating
+        FROM
+            climbing.boulders b
+        LEFT JOIN
+            (SELECT * FROM climbing.sends WHERE climbing.sends.angle = {angle}) s
+            ON b.id = s.boulder_id
+        GROUP BY
+            b.id
+        """,
+        conn,
+    )
+
+    return df.to_json(orient="records")
+
+
+@app.route('/climbing/boulders/detail/<int:id>', methods=['GET'])
+def climbing_boulders_detail(id):
+    conn = psycopg2.connect(
+        database="postgres",
+        user="postgres",
+        password=DB_PASS,
+        host="89.221.216.28",
+    )
+
+    df = pd.read_sql(
+        f"SELECT hold_id, hold_type, path FROM climbing.boulders JOIN climbing.boulder_holds ON climbing.boulders.id = climbing.boulder_holds.boulder_id JOIN climbing.holds ON climbing.holds.id = climbing.boulder_holds.hold_id WHERE climbing.boulders.id = {id}",
+        conn,
+    )
+
+    return df.to_json(orient="records")
+
+
+@app.route('/climbing/wall', methods=['GET'])
+def climbing_wall():
+    with open("static/stena.jpg", "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read())
+        return encoded_string.decode("utf-8")
+
+
+@app.route('/climbing/holds', methods=['GET'])
+def climbing_holds():
+    conn = psycopg2.connect(
+        database="postgres",
+        user="postgres",
+        password=DB_PASS,
+        host="89.221.216.28",
+    )
+    df = pd.read_sql(
+        f"SELECT id, path FROM climbing.holds",
+        conn,
+    )
+
+    return df.to_json(orient="records")
+
+
+@app.route('/climbing/signup', methods=['POST'])
+def climbing_signup():
+    data = request.get_json()
+    username = data["username"]
+    password = data["password"]
+    hashed_password = generate_password_hash(password)
+
+    # Check if user already exists (username is unique)
+    conn = psycopg2.connect(
+        database="postgres",
+        user="postgres",
+        password=DB_PASS,
+        host="89.221.216.28",
+    )
+
+    df = pd.read_sql(
+        f"SELECT name FROM climbing.users",
+        conn,
+    )
+
+    if username in df["name"].values:
+        return f"Uživatel s jménem {username} již existuje.", 400
+
+    cur = conn.cursor()
+    cur.execute(
+        f"INSERT INTO climbing.users (name, password) VALUES ('{username}', '{hashed_password}')",
+    )
+
+    conn.commit()
+    cur.close()
+    conn.close()
+    return f"Uživatel {username} byl úspěšně vytvořen.", 200
+
+
+@app.route('/climbing/login', methods=['POST'])
+def climbing_login():
+    data = request.get_json()
+    username = data["username"]
+    password = data["password"]
+
+    conn = psycopg2.connect(
+        database="postgres",
+        user="postgres",
+        password=DB_PASS,
+        host="89.221.216.28",
+    )
+
+    # Get user from db
+    cur = conn.cursor()
+    cur.execute(
+        f"SELECT password, admin FROM climbing.users WHERE name = '{username}'",
+    )
+
+    user_data = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    if user_data is not None:
+        if check_password_hash(user_data[0], password):
+            token = jwt.encode({"username": username, "admin": user_data[1]}, SECRET, algorithm="HS256")
+            return token, 200
+        else:
+            return "Špatné heslo.", 401
+
+    return f"Uživatel {username} neexistuje.", 400
+
+
+@app.route('/climbing/whoami', methods=['GET'])
+@token_required
+def climbing_whoami(current_user):
+    return current_user, 200
