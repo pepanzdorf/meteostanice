@@ -755,8 +755,28 @@ def climbing_boulders(current_user, angle):
     return df.to_json(orient="records")
 
 
-@app.route('/climbing/boulders/detail/<int:bid>', methods=['POST'])
-def climbing_boulders_detail(bid):
+@app.route('/climbing/boulders/sends/<int:bid>', methods=['POST'])
+def climbing_boulders_sends(bid):
+    data = request.get_json()
+    angle = data["angle"]
+
+    conn = psycopg2.connect(
+        database="postgres",
+        user="postgres",
+        password=DB_PASS,
+        host="89.221.216.28",
+    )
+
+    df = pd.read_sql(
+        f"SELECT * FROM climbing.sends WHERE climbing.sends.boulder_id = {bid} AND climbing.sends.angle = {angle} ORDER BY climbing.sends.sent_date DESC",
+        conn,
+    )
+
+    return df.to_json(orient="records")
+
+
+@app.route('/climbing/boulders/holds/<int:bid>', methods=['GET'])
+def climbing_boulders_holds(bid):
     conn = psycopg2.connect(
         database="postgres",
         user="postgres",
@@ -875,10 +895,8 @@ def climbing_log_send(current_user):
     if current_user["username"] == "Nepřihlášen":
         return "Musíte být přihlášen.", 401
 
-    print(current_user)
 
     data = request.get_json()
-    print(data)
     boulder_id = data["boulder_id"]
     grade = data["grade"]
     rating = data["rating"]
