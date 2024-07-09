@@ -17,6 +17,7 @@ import numpy as np
 import json
 import base64
 import jwt
+from functools import wraps
 
 
 app = Flask(__name__)
@@ -30,6 +31,7 @@ SECRET = "hahatajne"
 
 
 def token_required(f):
+    @wraps(f)
     def decorated(*args, **kwargs):
         token = None
 
@@ -706,7 +708,8 @@ def climbing_random():
 
 
 @app.route('/climbing/boulders/<int:angle>', methods=['GET'])
-def climbing_boulders(angle):
+@token_required
+def climbing_boulders(current_user, angle):
     conn = psycopg2.connect(
         database="postgres",
         user="postgres",
@@ -714,22 +717,37 @@ def climbing_boulders(angle):
         host="89.221.216.28",
     )
     angle = int(angle)
+
     df = pd.read_sql(
         f"""
-        SELECT
-            b.id,
-            b.name,
-            b.description,
-            b.build_time,
-            COALESCE(AVG(s.grade), -1) as average_grade,
-            COALESCE(AVG(s.rating), -1) as average_rating
-        FROM
-            climbing.boulders b
-        LEFT JOIN
-            (SELECT * FROM climbing.sends WHERE climbing.sends.angle = {angle}) s
-            ON b.id = s.boulder_id
-        GROUP BY
-            b.id
+            SELECT
+                b.id,
+                b.name,
+                b.description,
+                b.build_time,
+                b.built_by,
+                COALESCE(AVG(s.grade), -1) as average_grade,
+                COALESCE(AVG(s.rating), -1) as average_rating,
+                CASE
+                    WHEN COUNT(u.name) > 0 THEN TRUE
+                    ELSE FALSE
+                END as sent,
+                CASE
+                    WHEN f.name IS NOT NULL THEN TRUE
+                    ELSE FALSE
+                END as favourite
+            FROM
+                climbing.boulders b
+            LEFT JOIN
+                climbing.sends s ON b.id = s.boulder_id AND s.angle = {angle}
+            LEFT JOIN
+                climbing.users u ON u.id = s.user_id AND u.name = '{current_user["username"]}'
+            LEFT JOIN
+                (SELECT f.boulder_id, u.name from climbing.favourites f JOIN climbing.users u ON f.user_id = u.id) f
+            ON
+                b.id = f.boulder_id AND f.name = '{current_user["username"]}'
+            GROUP BY
+                b.id, b.name, f.name;
         """,
         conn,
     )
@@ -737,8 +755,8 @@ def climbing_boulders(angle):
     return df.to_json(orient="records")
 
 
-@app.route('/climbing/boulders/detail/<int:id>', methods=['GET'])
-def climbing_boulders_detail(id):
+@app.route('/climbing/boulders/detail/<int:bid>', methods=['POST'])
+def climbing_boulders_detail(bid):
     conn = psycopg2.connect(
         database="postgres",
         user="postgres",
@@ -747,7 +765,7 @@ def climbing_boulders_detail(id):
     )
 
     df = pd.read_sql(
-        f"SELECT hold_id, hold_type, path FROM climbing.boulders JOIN climbing.boulder_holds ON climbing.boulders.id = climbing.boulder_holds.boulder_id JOIN climbing.holds ON climbing.holds.id = climbing.boulder_holds.hold_id WHERE climbing.boulders.id = {id}",
+        f"SELECT hold_id, hold_type, path FROM climbing.boulders JOIN climbing.boulder_holds ON climbing.boulders.id = climbing.boulder_holds.boulder_id JOIN climbing.holds ON climbing.holds.id = climbing.boulder_holds.hold_id WHERE climbing.boulders.id = {bid}",
         conn,
     )
 
@@ -849,3 +867,55 @@ def climbing_login():
 @token_required
 def climbing_whoami(current_user):
     return current_user, 200
+
+
+@app.route('/climbing/log_send', methods=['POST'])
+@token_required
+def climbing_log_send(current_user):
+    if current_user["username"] == "Nepřihlášen":
+        return "Musíte být přihlášen.", 401
+
+    print(current_user)
+
+    data = request.get_json()
+    print(data)
+    boulder_id = data["boulder_id"]
+    grade = data["grade"]
+    rating = data["rating"]
+    angle = data["angle"]
+    attempts = data["attempts"]
+
+    if boulder_id is None or grade is None or rating is None or angle is None or attempts is None:
+        return "Něco chybí.", 400
+
+    conn = psycopg2.connect(
+        database="postgres",
+        user="postgres",
+        password=DB_PASS,
+        host="89.221.216.28",
+    )
+
+    # Insert send into db
+    cur = conn.cursor()
+    cur.execute(
+        f"""
+        INSERT INTO
+            climbing.sends (user_id, boulder_id, grade, rating, angle, attempts, sent_date)
+        VALUES
+            (
+                (SELECT id FROM climbing.users WHERE name = '{current_user['username']}'),
+                {boulder_id},
+                {grade},
+                {rating},
+                {angle},
+                {attempts},
+                NOW()
+                )
+        """,
+    )
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return "OK", 200
