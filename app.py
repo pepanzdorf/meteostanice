@@ -758,7 +758,7 @@ def climbing_boulders_sends(bid):
     )
 
     df = pd.read_sql(
-        f"SELECT s.id, grade, sent_date, attempts, rating, name FROM climbing.sends s JOIN climbing.users u ON s.user_id = u.id WHERE s.boulder_id = {bid} AND s.angle = {angle} ORDER BY s.sent_date DESC",
+        f"SELECT s.id, grade, sent_date, attempts, rating, name, challenge_id FROM climbing.sends s JOIN climbing.users u ON s.user_id = u.id WHERE s.boulder_id = {bid} AND s.angle = {angle} ORDER BY s.sent_date DESC",
         conn,
     )
 
@@ -880,8 +880,9 @@ def climbing_log_send(current_user):
     rating = data["rating"]
     angle = data["angle"]
     attempts = data["attempts"]
+    challenge = data["challenge"]
 
-    if boulder_id is None or grade is None or rating is None or angle is None or attempts is None:
+    if boulder_id is None or grade is None or rating is None or angle is None or attempts is None or challenge is None:
         return "Něco chybí.", 400
 
     conn = psycopg2.connect(
@@ -893,7 +894,7 @@ def climbing_log_send(current_user):
     cur.execute(
         f"""
         INSERT INTO
-            climbing.sends (user_id, boulder_id, grade, rating, angle, attempts, sent_date)
+            climbing.sends (user_id, boulder_id, grade, rating, angle, attempts, sent_date, challenge_id)
         VALUES
             (
                 (SELECT id FROM climbing.users WHERE name = '{current_user['username']}'),
@@ -902,7 +903,8 @@ def climbing_log_send(current_user):
                 {rating},
                 {angle},
                 {attempts},
-                NOW()
+                NOW(),
+                {challenge}
                 )
         """,
     )
@@ -1061,4 +1063,20 @@ def climbing_boulders_send_delete(current_user, sid):
     conn.close()
 
     return "OK", 200
+
+
+@app.route('/climbing/boulders/challenges', methods=['GET'])
+def climbing_boulders_challenges():
+    conn = psycopg2.connect(
+        **db_conn
+    )
+
+    df = pd.read_sql(
+        f"SELECT id, name, description, score FROM climbing.challenges",
+        conn,
+    )
+
+    df.set_index("id", inplace=True)
+
+    return df.to_json(orient="index")
 
