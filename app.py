@@ -1072,11 +1072,30 @@ def climbing_boulders_challenges():
     )
 
     df = pd.read_sql(
-        f"SELECT id, name, description, score FROM climbing.challenges",
+        f"SELECT id, name, description, score FROM climbing.challenges WHERE id != 1 ORDER BY score",
         conn,
     )
 
-    df.set_index("id", inplace=True)
+    return df.to_json(orient="records")
 
-    return df.to_json(orient="index")
+
+@app.route('/climbing/challenges/completed/<int:bid>', methods=['POST'])
+@token_required
+def climbing_challenges_completed(current_user, bid):
+    if current_user["username"] == "Nepřihlášen":
+        return [], 200
+
+    data = request.get_json()
+    angle = data["angle"]
+
+    conn = psycopg2.connect(
+        **db_conn
+    )
+
+    df = pd.read_sql(
+        f"SELECT DISTINCT sends.challenge_id FROM climbing.sends WHERE user_id = (SELECT id FROM climbing.users WHERE name = '{current_user['username']}') AND boulder_id = {bid} AND angle = {angle}",
+        conn,
+    )
+
+    return df["challenge_id"].to_json(orient="records")
 
