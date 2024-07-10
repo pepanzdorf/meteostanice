@@ -768,7 +768,7 @@ def climbing_boulders_sends(bid):
     )
 
     df = pd.read_sql(
-        f"SELECT * FROM climbing.sends WHERE climbing.sends.boulder_id = {bid} AND climbing.sends.angle = {angle} ORDER BY climbing.sends.sent_date DESC",
+        f"SELECT s.id, grade, sent_date, attempts, rating, name FROM climbing.sends s JOIN climbing.users u ON s.user_id = u.id WHERE s.boulder_id = {bid} AND s.angle = {angle} ORDER BY s.sent_date DESC",
         conn,
     )
 
@@ -937,3 +937,39 @@ def climbing_log_send(current_user):
     conn.close()
 
     return "OK", 200
+
+
+@app.route('/climbing/boulders/favourite/<int:bid>', methods=['DELETE', 'POST'])
+@token_required
+def climbing_favourite(current_user, bid):
+    if current_user["username"] == "Nepřihlášen":
+        return "Musíte být přihlášen.", 401
+
+    conn = psycopg2.connect(
+        database="postgres",
+        user="postgres",
+        password=DB_PASS,
+        host="89.221.216.28",
+    )
+
+    if request.method == 'DELETE':
+        cur = conn.cursor()
+        cur.execute(
+            f"DELETE FROM climbing.favourites WHERE user_id = (SELECT id FROM climbing.users WHERE name = '{current_user['username']}') AND boulder_id = {bid}",
+        )
+
+        conn.commit()
+        cur.close()
+        conn.close()
+        return "OK", 200
+
+    if request.method == 'POST':
+        cur = conn.cursor()
+        cur.execute(
+            f"INSERT INTO climbing.favourites (user_id, boulder_id) VALUES ((SELECT id FROM climbing.users WHERE name = '{current_user['username']}'), {bid})",
+        )
+
+        conn.commit()
+        cur.close()
+        conn.close()
+        return "OK", 200
