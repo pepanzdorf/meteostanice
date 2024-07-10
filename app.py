@@ -30,6 +30,14 @@ users = {
 SECRET = "hahatajne"
 
 
+db_conn = {
+    "database": "postgres",
+    "user": "postgres",
+    "password": DB_PASS,
+    "host": "89.221.216.28",
+}
+
+
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -66,10 +74,7 @@ def select_timedelta(
     start=(datetime.utcnow() - timedelta(days=30)), end=datetime.utcnow()
 ):
     conn = psycopg2.connect(
-        database="postgres",
-        user="postgres",
-        password=DB_PASS,
-        host="89.221.216.28",
+        **db_conn
     )
     df = pd.read_sql(
         "SELECT * FROM weatherstation.records WHERE station_name = 'CBHOME' and inserted_at BETWEEN %(start)s AND %(end)s",
@@ -89,10 +94,7 @@ def select_timedelta(
 
 def select_last_record():
     conn = psycopg2.connect(
-        database="postgres",
-        user="postgres",
-        password=DB_PASS,
-        host="89.221.216.28",
+        **db_conn
     )
     df_last_record = pd.read_sql(
         "SELECT * FROM weatherstation.records WHERE station_name = 'CBHOME' and inserted_at=(SELECT max(inserted_at) FROM weatherstation.records where station_name = 'CBHOME');",
@@ -113,10 +115,7 @@ def select_last_record():
 
 def select_last_record_print():
     conn = psycopg2.connect(
-        database="postgres",
-        user="postgres",
-        password=DB_PASS,
-        host="89.221.216.28",
+        **db_conn
     )
     df_last_record = pd.read_sql(
         "SELECT * FROM tisk.records WHERE inserted_at=(SELECT max(inserted_at) FROM tisk.records);",
@@ -136,10 +135,7 @@ def select_timedelta_print(
     start=(datetime.utcnow() - timedelta(days=1)), end=datetime.utcnow()
 ):
     conn = psycopg2.connect(
-        database="postgres",
-        user="postgres",
-        password=DB_PASS,
-        host="89.221.216.28",
+        **db_conn
     )
     df = pd.read_sql(
         "SELECT * FROM tisk.records WHERE inserted_at BETWEEN %(start)s AND %(end)s",
@@ -711,10 +707,7 @@ def climbing_random():
 @token_required
 def climbing_boulders(current_user, angle):
     conn = psycopg2.connect(
-        database="postgres",
-        user="postgres",
-        password=DB_PASS,
-        host="89.221.216.28",
+        **db_conn
     )
     angle = int(angle)
 
@@ -761,10 +754,7 @@ def climbing_boulders_sends(bid):
     angle = data["angle"]
 
     conn = psycopg2.connect(
-        database="postgres",
-        user="postgres",
-        password=DB_PASS,
-        host="89.221.216.28",
+        **db_conn
     )
 
     df = pd.read_sql(
@@ -778,10 +768,7 @@ def climbing_boulders_sends(bid):
 @app.route('/climbing/boulders/holds/<int:bid>', methods=['GET'])
 def climbing_boulders_holds(bid):
     conn = psycopg2.connect(
-        database="postgres",
-        user="postgres",
-        password=DB_PASS,
-        host="89.221.216.28",
+        **db_conn
     )
 
     df = pd.read_sql(
@@ -802,10 +789,7 @@ def climbing_wall():
 @app.route('/climbing/holds', methods=['GET'])
 def climbing_holds():
     conn = psycopg2.connect(
-        database="postgres",
-        user="postgres",
-        password=DB_PASS,
-        host="89.221.216.28",
+        **db_conn
     )
     df = pd.read_sql(
         f"SELECT id, path FROM climbing.holds",
@@ -824,10 +808,7 @@ def climbing_signup():
 
     # Check if user already exists (username is unique)
     conn = psycopg2.connect(
-        database="postgres",
-        user="postgres",
-        password=DB_PASS,
-        host="89.221.216.28",
+        **db_conn
     )
 
     df = pd.read_sql(
@@ -856,10 +837,7 @@ def climbing_login():
     password = data["password"]
 
     conn = psycopg2.connect(
-        database="postgres",
-        user="postgres",
-        password=DB_PASS,
-        host="89.221.216.28",
+        **db_conn
     )
 
     # Get user from db
@@ -907,10 +885,7 @@ def climbing_log_send(current_user):
         return "Něco chybí.", 400
 
     conn = psycopg2.connect(
-        database="postgres",
-        user="postgres",
-        password=DB_PASS,
-        host="89.221.216.28",
+        **db_conn
     )
 
     # Insert send into db
@@ -946,10 +921,7 @@ def climbing_favourite(current_user, bid):
         return "Musíte být přihlášen.", 401
 
     conn = psycopg2.connect(
-        database="postgres",
-        user="postgres",
-        password=DB_PASS,
-        host="89.221.216.28",
+        **db_conn
     )
 
     if request.method == 'DELETE':
@@ -973,3 +945,120 @@ def climbing_favourite(current_user, bid):
         cur.close()
         conn.close()
         return "OK", 200
+
+
+@app.route('/climbing/boulders/comments/<int:bid>', methods=['GET'])
+def climbing_boulders_comments(bid):
+
+    conn = psycopg2.connect(
+        **db_conn
+    )
+
+    df = pd.read_sql(
+        f"SELECT c.id, name, date, text FROM climbing.comments c JOIN climbing.users u ON c.user_id = u.id WHERE c.boulder_id = {bid} ORDER BY c.date DESC",
+        conn,
+    )
+
+    return df.to_json(orient="records")
+
+
+@app.route('/climbing/boulders/comment/<int:bid>', methods=['POST'])
+@token_required
+def climbing_boulders_comment(current_user, bid):
+    if current_user["username"] == "Nepřihlášen":
+        return "Musíte být přihlášen.", 401
+
+    data = request.get_json()
+    text = data["text"]
+
+    if text is None:
+        return "Něco chybí.", 400
+
+    conn = psycopg2.connect(
+        **db_conn
+    )
+
+    cur = conn.cursor()
+    cur.execute(
+        f"INSERT INTO climbing.comments  (user_id, boulder_id, text, date) VALUES ((SELECT id FROM climbing.users WHERE name = '{current_user['username']}'), {bid}, '{text}', NOW())",
+    )
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return "OK", 200
+
+
+@app.route('/climbing/boulders/comment/<int:cid>', methods=['DELETE'])
+@token_required
+def climbing_boulders_comment_delete(current_user, cid):
+    if current_user["username"] == "Nepřihlášen":
+        return "Musíte být přihlášen.", 401
+
+    conn = psycopg2.connect(
+        **db_conn
+    )
+
+    # Check if user is owner of the comment
+    cur = conn.cursor()
+    cur.execute(
+        f"SELECT name FROM climbing.comments c JOIN climbing.users u ON c.user_id = u.id WHERE c.id = {cid}",
+    )
+
+    username = cur.fetchone()
+    if username is None:
+        return "Komentář neexistuje.", 404
+
+    if username[0] != current_user["username"] and not current_user["admin"]:
+        return "Nemáte oprávnění.", 403
+
+    cur = conn.cursor()
+    cur.execute(
+        f"DELETE FROM climbing.comments WHERE id = {cid}",
+    )
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return "OK", 200
+
+
+@app.route('/climbing/boulders/send/<int:sid>', methods=['DELETE'])
+@token_required
+def climbing_boulders_send_delete(current_user, sid):
+    if current_user["username"] == "Nepřihlášen":
+        return "Musíte být přihlášen.", 401
+
+    conn = psycopg2.connect(
+        **db_conn
+    )
+
+    # Check if user is owner of the send
+    cur = conn.cursor()
+    cur.execute(
+        f"SELECT name FROM climbing.sends s JOIN climbing.users u ON s.user_id = u.id WHERE s.id = {sid}",
+    )
+
+    username = cur.fetchone()
+    if username is None:
+        return "Výlez neexistuje.", 404
+
+
+    if username[0] != current_user["username"] and not current_user["admin"]:
+        return "Nemáte oprávnění.", 403
+
+
+    cur = conn.cursor()
+    cur.execute(
+        f"DELETE FROM climbing.sends WHERE id = {sid}",
+    )
+
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return "OK", 200
+
