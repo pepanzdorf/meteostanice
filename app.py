@@ -772,11 +772,22 @@ def climbing_boulders_holds(bid):
     )
 
     df = pd.read_sql(
-        f"SELECT hold_id, hold_type, path FROM climbing.boulders JOIN climbing.boulder_holds ON climbing.boulders.id = climbing.boulder_holds.boulder_id JOIN climbing.holds ON climbing.holds.id = climbing.boulder_holds.hold_id WHERE climbing.boulders.id = {bid}",
+        f"SELECT hold_id, hold_type, path, is_volume FROM climbing.boulders JOIN climbing.boulder_holds ON climbing.boulders.id = climbing.boulder_holds.boulder_id JOIN climbing.holds ON climbing.holds.id = climbing.boulder_holds.hold_id WHERE climbing.boulders.id = {bid}",
         conn,
     )
 
-    return df.to_json(orient="records")
+    if df.empty:
+        return {"false": [], "true": []}
+
+    grouped_dict = df.groupby("is_volume").apply(lambda x: x.to_dict(orient="records")).to_dict()
+    grouped_dict = {str(key).lower(): value for key, value in grouped_dict.items()}
+
+    if 'true' not in grouped_dict.keys():
+        grouped_dict["true"] = []
+    if 'false' not in grouped_dict.keys():
+        grouped_dict["false"] = []
+
+    return grouped_dict
 
 
 @app.route('/climbing/wall', methods=['GET'])
@@ -792,11 +803,13 @@ def climbing_holds():
         **db_conn
     )
     df = pd.read_sql(
-        f"SELECT id, path FROM climbing.holds",
+        f"SELECT id, path, is_volume FROM climbing.holds",
         conn,
     )
 
-    return df.to_json(orient="records")
+    grouped_dict = df.groupby("is_volume").apply(lambda x: x.to_dict(orient="records")).to_dict()
+
+    return grouped_dict
 
 
 @app.route('/climbing/signup', methods=['POST'])
