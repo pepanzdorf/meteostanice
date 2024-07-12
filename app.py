@@ -712,7 +712,7 @@ def climbing_boulders(current_user, angle):
     angle = int(angle)
 
     df = pd.read_sql(
-        f"""
+        """
             SELECT
                 b.id,
                 b.name,
@@ -732,17 +732,18 @@ def climbing_boulders(current_user, angle):
             FROM
                 climbing.boulders b
             LEFT JOIN
-                climbing.sends s ON b.id = s.boulder_id AND s.angle = {angle}
+                climbing.sends s ON b.id = s.boulder_id AND s.angle = %(angle)s
             LEFT JOIN
-                climbing.users u ON u.id = s.user_id AND u.name = '{current_user["username"]}'
+                climbing.users u ON u.id = s.user_id AND u.name = %(username)s
             LEFT JOIN
                 (SELECT f.boulder_id, u.name from climbing.favourites f JOIN climbing.users u ON f.user_id = u.id) f
             ON
-                b.id = f.boulder_id AND f.name = '{current_user["username"]}'
+                b.id = f.boulder_id AND f.name = %(username)s
             GROUP BY
                 b.id, b.name, f.name;
         """,
         conn,
+        params={"angle": angle, "username": current_user["username"]},
     )
 
     return df.to_json(orient="records")
@@ -758,8 +759,9 @@ def climbing_boulders_sends(bid):
     )
 
     df = pd.read_sql(
-        f"SELECT s.id, grade, sent_date, attempts, rating, name, challenge_id FROM climbing.sends s JOIN climbing.users u ON s.user_id = u.id WHERE s.boulder_id = {bid} AND s.angle = {angle} ORDER BY s.sent_date DESC",
+        f"SELECT s.id, grade, sent_date, attempts, rating, name, challenge_id FROM climbing.sends s JOIN climbing.users u ON s.user_id = u.id WHERE s.boulder_id = %(bid)s AND s.angle = %(angle)s ORDER BY s.sent_date DESC",
         conn,
+        params={"bid": bid, "angle": angle},
     )
 
     return df.to_json(orient="records")
@@ -772,8 +774,9 @@ def climbing_boulders_holds(bid):
     )
 
     df = pd.read_sql(
-        f"SELECT hold_id, hold_type, path, is_volume FROM climbing.boulders JOIN climbing.boulder_holds ON climbing.boulders.id = climbing.boulder_holds.boulder_id JOIN climbing.holds ON climbing.holds.id = climbing.boulder_holds.hold_id WHERE climbing.boulders.id = {bid}",
+        f"SELECT hold_id, hold_type, path, is_volume FROM climbing.boulders JOIN climbing.boulder_holds ON climbing.boulders.id = climbing.boulder_holds.boulder_id JOIN climbing.holds ON climbing.holds.id = climbing.boulder_holds.hold_id WHERE climbing.boulders.id = %(bid)s",
         conn,
+        params={"bid": bid},
     )
 
     if df.empty:
@@ -843,7 +846,8 @@ def climbing_signup():
 
     cur = conn.cursor()
     cur.execute(
-        f"INSERT INTO climbing.users (name, password) VALUES ('{username}', '{hashed_password}')",
+        f"INSERT INTO climbing.users (name, password) VALUES (%(username)s, %(hashed_password)s)",
+        {"username": username, "hashed_password": hashed_password},
     )
 
     conn.commit()
@@ -865,7 +869,8 @@ def climbing_login():
     # Get user from db
     cur = conn.cursor()
     cur.execute(
-        f"SELECT password, admin FROM climbing.users WHERE name = '{username}'",
+        f"SELECT password, admin FROM climbing.users WHERE name = %(username)s",
+        {"username": username},
     )
 
     user_data = cur.fetchone()
@@ -919,16 +924,17 @@ def climbing_log_send(current_user):
             climbing.sends (user_id, boulder_id, grade, rating, angle, attempts, sent_date, challenge_id)
         VALUES
             (
-                (SELECT id FROM climbing.users WHERE name = '{current_user['username']}'),
-                {boulder_id},
-                {grade},
-                {rating},
-                {angle},
-                {attempts},
+                (SELECT id FROM climbing.users WHERE name = %(username)s),
+                %(boulder_id)s,
+                %(grade)s,
+                %(rating)s,
+                %(angle)s,
+                %(attempts)s,
                 NOW(),
-                {challenge}
+                %(challenge)s
                 )
         """,
+        {"username": current_user["username"], "boulder_id": boulder_id, "grade": grade, "rating": rating, "angle": angle, "attempts": attempts, "challenge": challenge}
     )
 
     conn.commit()
@@ -951,7 +957,8 @@ def climbing_favourite(current_user, bid):
     if request.method == 'DELETE':
         cur = conn.cursor()
         cur.execute(
-            f"DELETE FROM climbing.favourites WHERE user_id = (SELECT id FROM climbing.users WHERE name = '{current_user['username']}') AND boulder_id = {bid}",
+            f"DELETE FROM climbing.favourites WHERE user_id = (SELECT id FROM climbing.users WHERE name = %(username)s) AND boulder_id = %(bid)s",
+            {"username": current_user["username"], "bid": bid}
         )
 
         conn.commit()
@@ -962,7 +969,8 @@ def climbing_favourite(current_user, bid):
     if request.method == 'POST':
         cur = conn.cursor()
         cur.execute(
-            f"INSERT INTO climbing.favourites (user_id, boulder_id) VALUES ((SELECT id FROM climbing.users WHERE name = '{current_user['username']}'), {bid})",
+            f"INSERT INTO climbing.favourites (user_id, boulder_id) VALUES ((SELECT id FROM climbing.users WHERE name = %(username)s), %(bid)s)",
+            {"username": current_user["username"], "bid": bid}
         )
 
         conn.commit()
@@ -979,8 +987,9 @@ def climbing_boulders_comments(bid):
     )
 
     df = pd.read_sql(
-        f"SELECT c.id, name, date, text FROM climbing.comments c JOIN climbing.users u ON c.user_id = u.id WHERE c.boulder_id = {bid} ORDER BY c.date DESC",
+        f"SELECT c.id, name, date, text FROM climbing.comments c JOIN climbing.users u ON c.user_id = u.id WHERE c.boulder_id = %(bid)s ORDER BY c.date DESC",
         conn,
+        params={"bid": bid},
     )
 
     return df.to_json(orient="records")
@@ -1004,7 +1013,8 @@ def climbing_boulders_comment(current_user, bid):
 
     cur = conn.cursor()
     cur.execute(
-        f"INSERT INTO climbing.comments  (user_id, boulder_id, text, date) VALUES ((SELECT id FROM climbing.users WHERE name = '{current_user['username']}'), {bid}, '{text}', NOW())",
+        f"INSERT INTO climbing.comments  (user_id, boulder_id, text, date) VALUES ((SELECT id FROM climbing.users WHERE name = %(username)s), %(bid)s, %(text)s, NOW())",
+        {"username": current_user["username"], "bid": bid, "text": text}
     )
 
     conn.commit()
@@ -1027,7 +1037,8 @@ def climbing_boulders_comment_delete(current_user, cid):
     # Check if user is owner of the comment
     cur = conn.cursor()
     cur.execute(
-        f"SELECT name FROM climbing.comments c JOIN climbing.users u ON c.user_id = u.id WHERE c.id = {cid}",
+        f"SELECT name FROM climbing.comments c JOIN climbing.users u ON c.user_id = u.id WHERE c.id = %(cid)s",
+        {"cid": cid}
     )
 
     username = cur.fetchone()
@@ -1039,7 +1050,8 @@ def climbing_boulders_comment_delete(current_user, cid):
 
     cur = conn.cursor()
     cur.execute(
-        f"DELETE FROM climbing.comments WHERE id = {cid}",
+        f"DELETE FROM climbing.comments WHERE id = %(cid)s",
+        {"cid": cid}
     )
 
     conn.commit()
@@ -1062,7 +1074,8 @@ def climbing_boulders_send_delete(current_user, sid):
     # Check if user is owner of the send
     cur = conn.cursor()
     cur.execute(
-        f"SELECT name FROM climbing.sends s JOIN climbing.users u ON s.user_id = u.id WHERE s.id = {sid}",
+        f"SELECT name FROM climbing.sends s JOIN climbing.users u ON s.user_id = u.id WHERE s.id = %(sid)s",
+        {"sid": sid}
     )
 
     username = cur.fetchone()
@@ -1076,7 +1089,8 @@ def climbing_boulders_send_delete(current_user, sid):
 
     cur = conn.cursor()
     cur.execute(
-        f"DELETE FROM climbing.sends WHERE id = {sid}",
+        f"DELETE FROM climbing.sends WHERE id = %(sid)s",
+        {"sid": sid}
     )
 
 
@@ -1115,8 +1129,9 @@ def climbing_challenges_completed(current_user, bid):
     )
 
     df = pd.read_sql(
-        f"SELECT DISTINCT s.challenge_id, c.name, c.score  FROM climbing.sends s JOIN climbing.challenges c ON s.challenge_id = c.id WHERE user_id = (SELECT id FROM climbing.users WHERE name = '{current_user['username']}') AND boulder_id = {bid} AND angle = {angle} AND s.challenge_id != 1",
+        f"SELECT DISTINCT s.challenge_id, c.name, c.score  FROM climbing.sends s JOIN climbing.challenges c ON s.challenge_id = c.id WHERE user_id = (SELECT id FROM climbing.users WHERE name = %(username)s) AND boulder_id = %(bid)s AND angle = %(angle)s AND s.challenge_id != 1",
         conn,
+        params={"username": current_user["username"], "bid": bid, "angle": angle},
     )
 
     if df.empty:
@@ -1142,20 +1157,23 @@ def save_boulder(current_user):
 
     cur = conn.cursor()
     cur.execute(
-        f"SELECT id FROM climbing.users WHERE name = '{current_user['username']}'",
+        f"SELECT id FROM climbing.users WHERE name = %(username)s",
+        {"username": current_user["username"]}
     )
 
     uid = cur.fetchone()[0]
 
     cur.execute(
-        f"INSERT INTO climbing.boulders (name, description, build_time, built_by) VALUES ('{name}', '{description}', NOW(), {uid}) RETURNING id",
+        f"INSERT INTO climbing.boulders (name, description, build_time, built_by) VALUES (%(name)s, %(description)s, NOW(), %(uid)s) RETURNING id",
+        {"name": name, "description": description, "uid": uid}
     )
 
     bid = cur.fetchone()[0]
 
     for hold in holds:
         cur.execute(
-            f"INSERT INTO climbing.boulder_holds (boulder_id, hold_id, hold_type) VALUES ({bid}, {hold['id']}, '{hold['type']}')",
+            f"INSERT INTO climbing.boulder_holds (boulder_id, hold_id, hold_type) VALUES (%(bid)s, %(hold_id)s, %(hold_type)s)",
+            {"bid": bid, "hold_id": hold["id"], "hold_type": hold["type"]}
         )
 
     conn.commit()
