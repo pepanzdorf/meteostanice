@@ -1181,3 +1181,43 @@ def save_boulder(current_user):
     conn.close()
 
     return "OK", 200
+
+
+@app.route('/climbing/boulders/<int:bid>', methods=['DELETE'])
+@token_required
+def boulder_delete(current_user, bid):
+    if current_user["username"] == "Nepřihlášen":
+        return "Musíte být přihlášen.", 401
+
+    conn = psycopg2.connect(
+        **db_conn
+    )
+
+    # Check if user is builder of the boulder
+    cur = conn.cursor()
+    cur.execute(
+        f"SELECT u.name FROM climbing.boulders b JOIN climbing.users u ON b.built_by = u.id WHERE b.id = %(bid)s",
+        {"bid": bid}
+    )
+
+    username = cur.fetchone()
+    if username is None:
+        return "Výlez neexistuje.", 404
+
+
+    if username[0] != current_user["username"] and not current_user["admin"]:
+        return "Nemáte oprávnění.", 403
+
+
+    cur = conn.cursor()
+    cur.execute(
+        f"DELETE FROM climbing.boulders WHERE id = %(bid)s",
+        {"bid": bid}
+    )
+
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return "OK", 200
