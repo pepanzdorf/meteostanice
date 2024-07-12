@@ -718,7 +718,7 @@ def climbing_boulders(current_user, angle):
                 b.name,
                 b.description,
                 b.build_time,
-                b.built_by,
+                (SELECT name FROM climbing.users WHERE id = b.built_by) as built_by,
                 COALESCE(AVG(s.grade), -1) as average_grade,
                 COALESCE(AVG(s.rating), -1) as average_rating,
                 CASE
@@ -807,7 +807,16 @@ def climbing_holds():
         conn,
     )
 
+    if df.empty:
+        return {"false": [], "true": []}
+
     grouped_dict = df.groupby("is_volume").apply(lambda x: x.to_dict(orient="records")).to_dict()
+    grouped_dict = {str(key).lower(): value for key, value in grouped_dict.items()}
+
+    if 'true' not in grouped_dict.keys():
+        grouped_dict["true"] = []
+    if 'false' not in grouped_dict.keys():
+        grouped_dict["false"] = []
 
     return grouped_dict
 
@@ -1096,7 +1105,7 @@ def climbing_boulders_challenges():
 @token_required
 def climbing_challenges_completed(current_user, bid):
     if current_user["username"] == "Nepřihlášen":
-        return [], 200
+        return "Nepřihlášen", 401
 
     data = request.get_json()
     angle = data["angle"]
@@ -1106,9 +1115,51 @@ def climbing_challenges_completed(current_user, bid):
     )
 
     df = pd.read_sql(
-        f"SELECT DISTINCT sends.challenge_id FROM climbing.sends WHERE user_id = (SELECT id FROM climbing.users WHERE name = '{current_user['username']}') AND boulder_id = {bid} AND angle = {angle}",
+        f"SELECT DISTINCT s.challenge_id, c.name, c.score  FROM climbing.sends s JOIN climbing.challenges c ON s.challenge_id = c.id WHERE user_id = (SELECT id FROM climbing.users WHERE name = '{current_user['username']}') AND boulder_id = {bid} AND angle = {angle} AND s.challenge_id != 1",
         conn,
     )
 
-    return df["challenge_id"].to_json(orient="records")
+    if df.empty:
+        return "Žádné výzvy", 400
 
+    return {'ids': df["challenge_id"].to_list(), 'rest': df.to_dict(orient="records")}
+
+
+@app.route('/climbing/boulder', methods=['POST'])
+@token_required
+def save_boulder(current_user):
+    data = request.get_json()
+    name = data["name"]
+    description = data["description"]
+    holds = data["holds"]
+
+    if current_user["username"] == "Nepřihlášen":
+        return "Musíte být přihlášen.", 401
+
+    conn = psycopg2.connect(
+        **db_conn
+    )
+
+    cur = conn.cursor()
+    cur.execute(
+        f"SELECT id FROM climbing.users WHERE name = '{current_user['username']}'",
+    )
+
+    uid = cur.fetchone()[0]
+
+    cur.execute(
+        f"INSERT INTO climbing.boulders (name, description, build_time, built_by) VALUES ('{name}', '{description}', NOW(), {uid}) RETURNING id",
+    )
+
+    bid = cur.fetchone()[0]
+
+    for hold in holds:
+        cur.execute(
+            f"INSERT INTO climbing.boulder_holds (boulder_id, hold_id, hold_type) VALUES ({bid}, {hold['id']}, '{hold['type']}')",
+        )
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return "OK", 200
