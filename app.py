@@ -1299,4 +1299,4 @@ def climbing_stats():
 
     all_climbing_stats = create_climbing_stats(df)
 
-    return all_climbing_stats
+    return json.dumps(all_climbing_stats)
