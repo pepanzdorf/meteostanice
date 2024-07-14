@@ -7,6 +7,7 @@ from flask_httpauth import HTTPBasicAuth
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from plot import *
+from climbing_functions import *
 import pandas as pd
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -719,7 +720,7 @@ def climbing_boulders(current_user, angle):
                 b.description,
                 b.build_time,
                 (SELECT name FROM climbing.users WHERE id = b.built_by) as built_by,
-                COALESCE(AVG(s.grade), -1) as average_grade,
+                FLOOR(COALESCE(AVG(s.grade), -1)) as average_grade,
                 COALESCE(AVG(s.rating), -1) as average_rating,
                 CASE
                     WHEN COUNT(u.name) > 0 THEN TRUE
@@ -1260,3 +1261,42 @@ def boulder_delete(current_user, bid):
     conn.close()
 
     return "OK", 200
+
+
+@app.route('/climbing/stats', methods=['POST'])
+def climbing_stats():
+    data = request.get_json()
+    angle = data["angle"]
+
+    conn = psycopg2.connect(
+        **db_conn
+    )
+
+    df = pd.read_sql(
+        """
+            SELECT
+                b.id as boulder_id,
+                FLOOR(average_grade) as grade,
+                attempts,
+                challenge_id,
+                score,
+                sent_date,
+                u.name as username
+            FROM
+                climbing.boulders b
+            JOIN
+                climbing.boulder_grades bg ON b.id = bg.id AND bg.angle = %(angle)s
+            JOIN
+                climbing.sends s ON b.id = s.boulder_id AND s.angle = %(angle)s
+            JOIN
+                climbing.challenges c ON s.challenge_id = c.id
+            JOIN
+                climbing.users u ON s.user_id = u.id
+        """,
+        conn,
+        params={"angle": angle},
+    )
+
+    all_climbing_stats = create_climbing_stats(df)
+
+    return all_climbing_stats
