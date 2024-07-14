@@ -1147,6 +1147,9 @@ def save_boulder(current_user):
     name = data["name"]
     description = data["description"]
     holds = data["holds"]
+    edit = data["edit"]
+    bid = data["bid"]
+
 
     if current_user["username"] == "Nepřihlášen":
         return "Musíte být přihlášen.", 401
@@ -1155,32 +1158,68 @@ def save_boulder(current_user):
         **db_conn
     )
 
-    cur = conn.cursor()
-    cur.execute(
-        f"SELECT id FROM climbing.users WHERE name = %(username)s",
-        {"username": current_user["username"]}
-    )
-
-    uid = cur.fetchone()[0]
-
-    cur.execute(
-        f"INSERT INTO climbing.boulders (name, description, build_time, built_by) VALUES (%(name)s, %(description)s, NOW(), %(uid)s) RETURNING id",
-        {"name": name, "description": description, "uid": uid}
-    )
-
-    bid = cur.fetchone()[0]
-
-    for hold in holds:
+    if edit:
+        cur = conn.cursor()
         cur.execute(
-            f"INSERT INTO climbing.boulder_holds (boulder_id, hold_id, hold_type) VALUES (%(bid)s, %(hold_id)s, %(hold_type)s)",
-            {"bid": bid, "hold_id": hold["id"], "hold_type": hold["type"]}
+            f"SELECT u.name FROM climbing.boulders b JOIN climbing.users u ON b.built_by = u.id WHERE b.id = %(bid)s",
+            {"bid": bid}
         )
 
-    conn.commit()
-    cur.close()
-    conn.close()
+        username = cur.fetchone()
+        if username is None:
+            return "Boulder neexistuje.", 404
 
-    return "OK", 200
+        if username[0] != current_user["username"] and not current_user["admin"]:
+            return "Nemáte oprávnění.", 403
+
+        cur.execute(
+            f"UPDATE climbing.boulders SET name = %(name)s, description = %(description)s WHERE id = %(bid)s",
+            {"name": name, "description": description, "bid": bid}
+        )
+
+        cur.execute(
+            f"DELETE FROM climbing.boulder_holds WHERE boulder_id = %(bid)s",
+            {"bid": bid}
+        )
+
+        for hold in holds:
+            cur.execute(
+                f"INSERT INTO climbing.boulder_holds (boulder_id, hold_id, hold_type) VALUES (%(bid)s, %(hold_id)s, %(hold_type)s)",
+                {"bid": bid, "hold_id": hold["id"], "hold_type": hold["type"]}
+            )
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return "EDITED", 200
+    else:
+        cur = conn.cursor()
+        cur.execute(
+            f"SELECT id FROM climbing.users WHERE name = %(username)s",
+            {"username": current_user["username"]}
+        )
+
+        uid = cur.fetchone()[0]
+
+        cur.execute(
+            f"INSERT INTO climbing.boulders (name, description, build_time, built_by) VALUES (%(name)s, %(description)s, NOW(), %(uid)s) RETURNING id",
+            {"name": name, "description": description, "uid": uid}
+        )
+
+        bid = cur.fetchone()[0]
+
+        for hold in holds:
+            cur.execute(
+                f"INSERT INTO climbing.boulder_holds (boulder_id, hold_id, hold_type) VALUES (%(bid)s, %(hold_id)s, %(hold_type)s)",
+                {"bid": bid, "hold_id": hold["id"], "hold_type": hold["type"]}
+            )
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return "SAVED", 200
 
 
 @app.route('/climbing/boulders/<int:bid>', methods=['DELETE'])
