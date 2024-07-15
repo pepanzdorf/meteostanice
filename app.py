@@ -1297,6 +1297,30 @@ def climbing_stats():
         params={"angle": angle},
     )
 
-    all_climbing_stats = create_climbing_stats(df)
+    grade_counts = pd.read_sql(
+        """
+            SELECT
+                FLOOR(average_grade) as grade,
+                COUNT(id) as count
+            FROM
+                climbing.boulder_grades
+            WHERE
+                angle = %(angle)s
+            GROUP BY
+                FLOOR(average_grade)
+            ORDER BY
+                FLOOR(average_grade)
+        """,
+        conn,
+        params={"angle": angle},
+    )
+
+    grade_counts = dict(zip(grade_counts["grade"], grade_counts["count"]))
+    # Fill in missing grades
+    for i in range(0, 52):
+        if i not in grade_counts:
+            grade_counts[i] = 0
+
+    all_climbing_stats = create_climbing_stats(df, grade_counts)
 
     return json.dumps(all_climbing_stats)
