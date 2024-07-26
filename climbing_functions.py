@@ -40,6 +40,7 @@ def create_climbing_stats_user(df, grade_counts):
     stats['sum_sends'] = sum_sends
     stats['sum_flashes'] = sum_flashes
     stats['completed_grades'] = completed_grades_joint
+    stats['icon'] = df['icon_url'].values[0]
 
     grouped_by_boulder = unduplicated.sort_values('sent_date').groupby('boulder_id')
 

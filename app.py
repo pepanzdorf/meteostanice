@@ -1281,7 +1281,8 @@ def climbing_stats():
                 challenge_id,
                 score,
                 sent_date,
-                u.name as username
+                u.name as username,
+                u.icon_url as icon_url
             FROM
                 climbing.boulders b
             JOIN
