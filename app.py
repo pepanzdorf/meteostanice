@@ -807,7 +807,7 @@ def climbing_holds():
         **db_conn
     )
     df = pd.read_sql(
-        f"SELECT id, path, is_volume FROM climbing.holds ORDER BY climbing.holds.id",
+        f"SELECT climbing.holds.id, path, is_volume, count FROM climbing.holds JOIN climbing.hold_counts ON climbing.holds.id = climbing.hold_counts.id ORDER BY climbing.holds.id",
         conn,
     )
 

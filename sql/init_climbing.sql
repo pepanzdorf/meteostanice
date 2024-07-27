@@ -67,3 +67,14 @@ LEFT JOIN
 GROUP BY
     b.id, b.name, b.description, b.build_time, s.angle;
 
+
+CREATE VIEW climbing.hold_counts AS
+SELECT
+    h.id,
+    COUNT(bh.boulder_id) AS count
+FROM
+    climbing.holds h
+LEFT JOIN
+    climbing.boulder_holds bh ON h.id = bh.hold_id
+GROUP BY
+    h.id
