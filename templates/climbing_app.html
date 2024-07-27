@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="CS">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikace lezení</title>
+</head>
+<body>
+    <h1>Verze aplikace</h1>
+    <ul>
+        {% for version in versions %}
+        <li>
+            Verze {{ version.version }} -
+            <a href="/static/{{ version.name }}">Stáhnout</a>
+        </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

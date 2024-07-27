@@ -1325,3 +1325,12 @@ def climbing_stats():
     all_climbing_stats = create_climbing_stats(df, grade_counts)
 
     return json.dumps(all_climbing_stats)
+
+
+@app.route('/climbing/app', methods=['GET'])
+def climbing_app():
+    versions = [
+        {"version": "1.0.0", "name": "climbing_app_1.0.0.apk"}
+    ]
+
+    return render_template("climbing_app.html", versions=versions)
