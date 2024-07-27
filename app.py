@@ -775,7 +775,7 @@ def climbing_boulders_holds(bid):
     )
 
     df = pd.read_sql(
-        f"SELECT hold_id, hold_type, path, is_volume FROM climbing.boulders JOIN climbing.boulder_holds ON climbing.boulders.id = climbing.boulder_holds.boulder_id JOIN climbing.holds ON climbing.holds.id = climbing.boulder_holds.hold_id WHERE climbing.boulders.id = %(bid)s SORT BY climbing.holds.id",
+        f"SELECT hold_id, hold_type, path, is_volume FROM climbing.boulders JOIN climbing.boulder_holds ON climbing.boulders.id = climbing.boulder_holds.boulder_id JOIN climbing.holds ON climbing.holds.id = climbing.boulder_holds.hold_id WHERE climbing.boulders.id = %(bid)s ORDER BY climbing.holds.id",
         conn,
         params={"bid": bid},
     )
@@ -807,7 +807,7 @@ def climbing_holds():
         **db_conn
     )
     df = pd.read_sql(
-        f"SELECT id, path, is_volume FROM climbing.holds SORT BY climbing.holds.id",
+        f"SELECT id, path, is_volume FROM climbing.holds ORDER BY climbing.holds.id",
         conn,
     )
 
