@@ -22,7 +22,8 @@ CREATE TABLE climbing.users (
     name TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
     admin BOOLEAN DEFAULT FALSE,
-    icon_url TEXT
+    icon_url TEXT,
+    description TEXT
 );
 CREATE TABLE climbing.sends (
     id SERIAL UNIQUE PRIMARY KEY,

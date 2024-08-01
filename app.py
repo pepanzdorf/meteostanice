@@ -720,7 +720,7 @@ def climbing_boulders(current_user, angle):
                 b.description,
                 b.build_time,
                 (SELECT name FROM climbing.users WHERE id = b.built_by) as built_by,
-                FLOOR(COALESCE(AVG(s.grade), -1)) as average_grade,
+                ROUND(COALESCE(AVG(s.grade), -1)) as average_grade,
                 COALESCE(AVG(s.rating), -1) as average_rating,
                 CASE
                     WHEN COUNT(u.name) > 0 THEN TRUE
@@ -892,7 +892,25 @@ def climbing_login():
 @app.route('/climbing/whoami', methods=['GET'])
 @token_required
 def climbing_whoami(current_user):
-    return current_user, 200
+    if current_user["username"] == "Nepřihlášen":
+        return {"username": "Nepřihlášen", "admin": False, "description": ""}, 200
+    else:
+        conn = psycopg2.connect(
+            **db_conn
+        )
+
+        cur = conn.cursor()
+        cur.execute(
+            f"SELECT description FROM climbing.users WHERE name = %(username)s",
+            {"username": current_user["username"]},
+        )
+
+        description = cur.fetchone()
+
+        cur.close()
+        conn.close()
+
+        return {"username": current_user["username"], "admin": current_user["admin"], "description": description[0]}, 200
 
 
 @app.route('/climbing/log_send', methods=['POST'])
@@ -1276,13 +1294,14 @@ def climbing_stats():
         """
             SELECT
                 b.id as boulder_id,
-                FLOOR(average_grade) as grade,
+                ROUND(average_grade) as grade,
                 attempts,
                 challenge_id,
                 score,
                 sent_date,
                 u.name as username,
-                u.icon_url as icon_url
+                u.icon_url as icon_url,
+                u.description as user_description
             FROM
                 climbing.boulders b
             JOIN
@@ -1301,16 +1320,16 @@ def climbing_stats():
     grade_counts = pd.read_sql(
         """
             SELECT
-                FLOOR(average_grade) as grade,
+                ROUND(average_grade) as grade,
                 COUNT(id) as count
             FROM
                 climbing.boulder_grades
             WHERE
                 angle = %(angle)s
             GROUP BY
-                FLOOR(average_grade)
+                ROUND(average_grade)
             ORDER BY
-                FLOOR(average_grade)
+                ROUND(average_grade)
         """,
         conn,
         params={"angle": angle},
@@ -1335,3 +1354,29 @@ def climbing_app():
     ]
 
     return render_template("climbing_app.html", versions=versions)
+
+
+@app.route('/climbing/set_description', methods=['POST'])
+@token_required
+def set_description(current_user):
+    data = request.get_json()
+    description = data["description"]
+
+    if current_user["username"] == "Nepřihlášen":
+        return "Musíte být přihlášen.", 400
+
+    conn = psycopg2.connect(
+        **db_conn
+    )
+
+    cur = conn.cursor()
+    cur.execute(
+        f"UPDATE climbing.users SET description = %(description)s WHERE name = %(username)s",
+        {"description": description, "username": current_user["username"]}
+    )
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return "OK", 200
