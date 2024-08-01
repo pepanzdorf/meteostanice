@@ -12,6 +12,9 @@
         <li>
             Verze {{ version.version }} -
             <a href="/static/{{ version.name }}">Stáhnout</a>
+            <p>
+                {{ version.description }}
+            </p>
         </li>
         {% endfor %}
     </ul>

@@ -1330,7 +1330,8 @@ def climbing_stats():
 @app.route('/climbing/app', methods=['GET'])
 def climbing_app():
     versions = [
-        {"version": "1.0.0", "name": "climbing_app_1.0.0.apk"}
+        {"version": "1.0.0", "name": "climbing_app_1.0.0.apk", "description": ""},
+        {"version": "1.0.1", "name": "climbing_app_1.0.1.apk", "description": "NEW: Náhodné řazení boulderů. BUGFIX: Oprava nehodnocených boulderů."},
     ]
 
     return render_template("climbing_app.html", versions=versions)
