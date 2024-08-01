@@ -50,14 +50,28 @@ def create_climbing_stats_user(df, grade_counts):
     for boulder_id, group in grouped_by_boulder:
         for i, row in group.iterrows():
             penalty = 0
-            if 4 > row['attempts'] > 0:
-                penalty = 1
-            elif 9 > row['attempts'] >= 4:
+            if 2 > row['attempts'] > 0:
                 penalty = 2
-            elif row['attempts'] >= 9:
+            elif 6 > row['attempts'] >= 2:
+                penalty = 3
+            elif 9 > row['attempts'] >= 6:
                 penalty = 4
+            elif row['attempts'] >= 9:
+                penalty = 5
 
-            score += ((row['grade'] + 1) * 5 - penalty) * row['score']
+            multiplier = 1
+            if 16 > row['grade'] > 6:
+                multiplier = 2
+            elif 25 > row['grade'] >= 16:
+                multiplier = 3
+            elif 34 > row['grade'] >= 25:
+                multiplier = 4
+            elif 43 > row['grade'] >= 34:
+                multiplier = 5
+            elif row['grade'] >= 43:
+                multiplier = 6
+
+            score += ((row['grade'] + 1) * multiplier * 3 - penalty) * row['score']
 
     stats['score'] = math.floor(score)
 
