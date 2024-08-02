@@ -10,10 +10,10 @@
     <ul>
         {% for version in versions %}
         <li>
-            Verze {{ version.version }} -
-            <a href="/static/{{ version.name }}">Stáhnout</a>
+            <h3>Verze {{ version.version }}</h3>
+            - <a href="/static/{{ version.name }}">Stáhnout</a>
             <p>
-                {{ version.description }}
+                {{ version.description | safe }}
             </p>
         </li>
         {% endfor %}

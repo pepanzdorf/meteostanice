@@ -316,6 +316,9 @@ INFO = read_content("info")
 RAIN = read_content("rain")
 RADIO = read_content("radio")
 CAM = read_content("cam")
+PATCH_100 = read_content("patch_1.0.0")
+PATCH_101 = read_content("patch_1.0.1")
+PATCH_110 = read_content("patch_1.1.0")
 
 
 @app.route("/")
@@ -1361,8 +1364,21 @@ def climbing_stats():
 @app.route('/climbing/app', methods=['GET'])
 def climbing_app():
     versions = [
-        {"version": "1.0.0", "name": "climbing_app_1.0.0.apk", "description": ""},
-        {"version": "1.0.1", "name": "climbing_app_1.0.1.apk", "description": "NEW: Náhodné řazení boulderů. BUGFIX: Oprava nehodnocených boulderů."},
+        {
+            "version": "1.1.0",
+            "name": "climbing_app_1.1.0.apk",
+            "description": PATCH_110
+        },
+        {
+            "version": "1.0.1",
+            "name": "climbing_app_1.0.1.apk",
+            "description": PATCH_101
+        },
+        {
+            "version": "1.0.0",
+            "name": "climbing_app_1.0.0.apk",
+            "description": PATCH_100
+        },
     ]
 
     return render_template("climbing_app.html", versions=versions)
