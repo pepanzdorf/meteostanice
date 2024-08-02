@@ -712,6 +712,14 @@ def climbing_boulders(current_user, angle):
     )
     angle = int(angle)
 
+    time_now = datetime.now()
+    if time_now.month <= 5:
+        season_start = datetime(time_now.year, 1, 1)
+        season_end = datetime(time_now.year, 5, 31)
+    else:
+        season_start = datetime(time_now.year, 6, 1)
+        season_end = datetime(time_now.year, 12, 31)
+
     df = pd.read_sql(
         """
             SELECT
@@ -726,6 +734,10 @@ def climbing_boulders(current_user, angle):
                     WHEN COUNT(u.name) > 0 THEN TRUE
                     ELSE FALSE
                 END as sent,
+                CASE
+                    WHEN COUNT(u.name) FILTER (WHERE s.sent_date BETWEEN %(season_start)s AND %(season_end)s) > 0 THEN TRUE
+                    ELSE FALSE
+                END as sent_season,
                 CASE
                     WHEN f.name IS NOT NULL THEN TRUE
                     ELSE FALSE
@@ -744,7 +756,7 @@ def climbing_boulders(current_user, angle):
                 b.id, b.name, f.name;
         """,
         conn,
-        params={"angle": angle, "username": current_user["username"]},
+        params={"angle": angle, "username": current_user["username"], 'season_start': season_start, 'season_end': season_end},
     )
 
     return df.to_json(orient="records")
