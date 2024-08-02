@@ -1,14 +1,54 @@
 import math
+from datetime import datetime
+
+
+def note_season(date):
+    year = date.year
+    month = date.month
+
+    if month <= 5:
+        return f"{year} 1"
+    else:
+        return f"{year} 2"
 
 
 def create_climbing_stats_user(df, grade_counts):
-    grouped_by_boulder = df.sort_values('sent_date').groupby('boulder_id')
+    df['season'] = df['sent_date'].apply(note_season)
+    current_season = note_season(datetime.now())
     unduplicated = df.drop_duplicates(subset=['boulder_id', 'challenge_id'])
-    grouped_by_grade = grouped_by_boulder.first().groupby('grade')
     stats = {
         "all_sends": len(df),
         "challenges": sum(unduplicated['challenge_id'] != 1),
+        'icon': df['icon_url'].values[0],
+        'user_description': df['user_description'].values[0]
     }
+
+    current_season_sends = False
+    grouped_by_season = df.sort_values('sent_date').groupby('season')
+    stats['previous_seasons'] = {}
+    for season, group in grouped_by_season:
+        if season == current_season:
+            season_stats = create_season_stats(group, grade_counts, True)
+            for key, value in season_stats.items():
+                stats[key] = value
+            current_season_sends = True
+        else:
+            stats['previous_seasons'][season] = create_season_stats(group, grade_counts, False)
+
+    if not current_season_sends:
+        stats['unique_sends'] = {}
+        stats['sum_sends'] = 0
+        stats['sum_flashes'] = 0
+        stats['completed_grades'] = []
+        stats['score'] = 0
+
+    return stats
+
+
+def create_season_stats(df, grade_counts, is_current_season):
+    grouped_by_boulder = df.sort_values('sent_date').groupby('boulder_id')
+    grouped_by_grade = grouped_by_boulder.first().groupby('grade')
+    unduplicated = df.drop_duplicates(subset=['boulder_id', 'challenge_id'])
     sum_sends = 0
     sum_flashes = 0
     completed_grades = []
@@ -29,19 +69,12 @@ def create_climbing_stats_user(df, grade_counts):
     completed_grades = sorted(completed_grades)
     completed_grades_joint = []
     for i in range(0, 52, 3):
-        if i in completed_grades and i+1 in completed_grades and i+2 in completed_grades:
-            if (grade_counts[i] + grade_counts[i+1] + grade_counts[i+2]) != 0:
-                completed_grades_joint.append(i//3)
-        if i == 51 and i in completed_grades and i+1 in completed_grades:
+        if i in completed_grades and i + 1 in completed_grades and i + 2 in completed_grades:
+            if (grade_counts[i] + grade_counts[i + 1] + grade_counts[i + 2]) != 0:
+                completed_grades_joint.append(i // 3)
+        if i == 51 and i in completed_grades and i + 1 in completed_grades:
             if (grade_counts[i] + grade_counts[i + 1]) != 0:
                 completed_grades_joint.append(i // 3)
-
-    stats['unique_sends'] = unique_sends
-    stats['sum_sends'] = sum_sends
-    stats['sum_flashes'] = sum_flashes
-    stats['completed_grades'] = completed_grades_joint
-    stats['icon'] = df['icon_url'].values[0]
-    stats['user_description'] = df['user_description'].values[0]
 
     grouped_by_boulder = unduplicated.sort_values('sent_date').groupby('boulder_id')
 
@@ -73,9 +106,19 @@ def create_climbing_stats_user(df, grade_counts):
 
             score += ((row['grade'] + 1) * multiplier * 3 - penalty) * row['score']
 
-    stats['score'] = math.floor(score)
-
-    return stats
+    if is_current_season:
+        return {
+            'unique_sends': unique_sends,
+            'sum_sends': sum_sends,
+            'sum_flashes': sum_flashes,
+            'completed_grades': completed_grades_joint,
+            'score': math.floor(score)
+        }
+    else:
+        return {
+            'unique_sends': unique_sends,
+            'score': math.floor(score)
+        }
 
 
 def create_climbing_stats(df, grade_counts):
