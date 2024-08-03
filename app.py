@@ -1316,7 +1316,8 @@ def climbing_stats():
                 sent_date,
                 u.name as username,
                 u.icon_url as icon_url,
-                u.description as user_description
+                u.description as user_description,
+                u.border as border
             FROM
                 climbing.boulders b
             JOIN

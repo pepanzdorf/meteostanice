@@ -20,7 +20,8 @@ def create_climbing_stats_user(df, grade_counts):
         "all_sends": len(df),
         "challenges": sum(unduplicated['challenge_id'] != 1),
         'icon': df['icon_url'].values[0],
-        'user_description': df['user_description'].values[0]
+        'user_description': df['user_description'].values[0],
+        'border': df['border'].values[0]
     }
 
     current_season_sends = False
