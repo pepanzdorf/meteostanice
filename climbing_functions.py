@@ -104,7 +104,7 @@ def create_season_stats(df, grade_counts, is_current_season):
             elif row['grade'] >= 43:
                 multiplier = 6
 
-            score += ((row['grade'] + 1) * multiplier * 3 - penalty) * row['score']
+            score += max(math.floor(((row['grade'] + 1) * multiplier * 3 - penalty) * row['score']), 0)
 
     if is_current_season:
         return {
@@ -112,12 +112,12 @@ def create_season_stats(df, grade_counts, is_current_season):
             'sum_sends': sum_sends,
             'sum_flashes': sum_flashes,
             'completed_grades': completed_grades_joint,
-            'score': math.floor(score)
+            'score': score
         }
     else:
         return {
             'unique_sends': unique_sends,
-            'score': math.floor(score)
+            'score': score
         }
 
 
