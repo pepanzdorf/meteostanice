@@ -1409,3 +1409,27 @@ def set_description(current_user):
     conn.close()
 
     return "OK", 200
+
+
+@app.route('/climbing/set_border/<int:border_id>', methods=['GET'])
+@token_required
+def set_border(current_user, border_id):
+    if current_user["username"] == "Nepřihlášen":
+        return "Musíte být přihlášen.", 401
+
+    conn = psycopg2.connect(
+        **db_conn
+    )
+
+    cur = conn.cursor()
+    cur.execute(
+        f"UPDATE climbing.users SET border = %(border_id)s WHERE name = %(username)s",
+        {"border_id": border_id, "username": current_user["username"]}
+    )
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return "OK", 200
+
