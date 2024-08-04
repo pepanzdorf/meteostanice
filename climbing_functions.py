@@ -12,16 +12,31 @@ def note_season(date):
         return f"{year} 2"
 
 
-def create_climbing_stats_user(df, grade_counts):
-    df['season'] = df['sent_date'].apply(note_season)
+def create_climbing_stats_user(df, grade_counts, sessions_stats):
     current_season = note_season(datetime.now())
     unduplicated = df.drop_duplicates(subset=['boulder_id', 'challenge_id'])
+
+    unique_sessions = df[['year', 'month', 'day', 'season']].drop_duplicates()
+
+    grouped_by_season = unique_sessions.groupby('season')
+    sessions_stats = {}
+    overall_seasons = 0
+    for season, group in grouped_by_season:
+        if season == current_season:
+            sessions_stats['current'] = len(group)
+        else:
+            sessions_stats['previous_seasons'][season] = len(group)
+        overall_seasons += len(group)
+
+    sessions_stats['overall'] = overall_seasons
+
     stats = {
         "all_sends": len(df),
         "challenges": sum(unduplicated['challenge_id'] != 1),
         'icon': df['icon_url'].values[0],
         'user_description': df['user_description'].values[0],
-        'border': int(df['border'].values[0])
+        'border': int(df['border'].values[0]),
+        'sessions': sessions_stats,
     }
 
     overall_score = 0
@@ -129,15 +144,39 @@ def create_season_stats(df, grade_counts, is_current_season):
 
 
 def create_climbing_stats(df, grade_counts):
+    df['year'] = df['sent_date'].dt.year
+    df['month'] = df['sent_date'].dt.month
+    df['day'] = df['sent_date'].dt.day
+    df['season'] = df['sent_date'].apply(note_season)
+
+    current_season = note_season(datetime.now())
+
+    unique_sessions = df[['year', 'month', 'day', 'season']].drop_duplicates()
+
+    grouped_by_season = unique_sessions.groupby('season')
+    sessions_stats = {}
+    overall_seasons = 0
+    for season, group in grouped_by_season:
+        if season == current_season:
+            sessions_stats['current'] = len(group)
+        else:
+            sessions_stats['previous_seasons'][season] = len(group)
+        overall_seasons += len(group)
+
+    sessions_stats['overall'] = overall_seasons
+
     grouped_by_user = df.sort_values('sent_date').groupby('username')
-    stats = {}
+    stats = {'sessions': sessions_stats}
+    user_stats = {}
     for username, group in grouped_by_user:
-        stats[username] = create_climbing_stats_user(group, grade_counts)
+        user_stats[username] = create_climbing_stats_user(group, grade_counts, sessions_stats)
 
     # sort by score
-    stats = {k: v for k, v in sorted(stats.items(), key=lambda item: item[1]['score'], reverse=True)}
+    user_stats = {k: v for k, v in sorted(user_stats.items(), key=lambda item: item[1]['score'], reverse=True)}
     # as array
-    stats = [(k, v) for k, v in stats.items()]
+    user_stats = [(k, v) for k, v in user_stats.items()]
+
+    stats['users'] = user_stats
 
     return stats
 
