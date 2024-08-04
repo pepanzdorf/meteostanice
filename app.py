@@ -822,7 +822,13 @@ def climbing_holds():
         **db_conn
     )
     df = pd.read_sql(
-        f"SELECT climbing.holds.id, path, is_volume, count FROM climbing.holds JOIN climbing.hold_counts ON climbing.holds.id = climbing.hold_counts.id ORDER BY climbing.holds.id",
+        f"""
+        SELECT
+            climbing.holds.id, path, is_volume, types_counts, boulders
+        FROM climbing.holds
+        JOIN climbing.hold_counts ON climbing.holds.id = climbing.hold_counts.id
+        JOIN climbing.hold_boulders ON climbing.hold_boulders.id = climbing.holds.id ORDER BY climbing.holds.id
+        """,
         conn,
     )
 

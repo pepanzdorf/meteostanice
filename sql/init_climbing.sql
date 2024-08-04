@@ -73,10 +73,38 @@ GROUP BY
 CREATE VIEW climbing.hold_counts AS
 SELECT
     h.id,
-    COUNT(bh.boulder_id) AS count
+    jsonb_object_agg(
+        COALESCE(bh.hold_type, -1),
+        COALESCE(count, 0)
+    ) AS types_counts
+FROM
+    climbing.holds h
+LEFT JOIN (
+    SELECT
+        hold_id,
+        hold_type,
+        COUNT(boulder_id) AS count
+    FROM
+        climbing.boulder_holds
+    GROUP BY
+        hold_id,
+        hold_type
+) bh ON h.id = bh.hold_id
+GROUP BY
+    h.id
+ORDER BY
+    h.id;
+
+CREATE VIEW climbing.hold_boulders AS
+SELECT
+    h.id,
+    array_agg(
+        ARRAY[b.name, ROUND(bg.average_grade)::TEXT]
+    ) as boulders
 FROM
     climbing.holds h
 LEFT JOIN
-    climbing.boulder_holds bh ON h.id = bh.hold_id
-GROUP BY
-    h.id
+    climbing.boulder_holds bh on h.id = bh.hold_id
+LEFT JOIN climbing.boulders b on bh.boulder_id = b.id
+LEFT JOIN climbing.boulder_grades bg on b.id = bg.id
+GROUP BY h.id;
