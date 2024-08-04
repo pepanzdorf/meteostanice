@@ -65,7 +65,7 @@ SELECT
 FROM
     climbing.boulders b
 LEFT JOIN
-    climbing.sends s ON b.id = s.boulder_id
+    (SELECT * FROM climbing.sends WHERE challenge_id = 1) s ON b.id = s.boulder_id
 GROUP BY
     b.id, b.name, b.description, b.build_time, s.angle;
 

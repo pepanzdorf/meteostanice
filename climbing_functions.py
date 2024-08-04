@@ -47,7 +47,7 @@ def create_climbing_stats_user(df, grade_counts):
         stats['score'] = 0
 
     stats['overall_score'] = overall_score
-    stats['unlocked_borders'] = completed_border_challenges(df, overall_score)
+    stats['unlocked_borders'], stats['to_unlock'] = completed_border_challenges(df, overall_score)
 
     return stats
 
@@ -146,6 +146,7 @@ def completed_border_challenges(user_df, overall_score):
     unique_boulder_ids = user_df['boulder_id'].unique()
     sends_in_december = sum(user_df['sent_date'].dt.month == 12)
     unlocked_borders = [0]  # No border
+    to_unlock = {}
     if overall_score >= 1000:
         unlocked_borders.append(1)
     if overall_score >= 5000:
@@ -165,35 +166,51 @@ def completed_border_challenges(user_df, overall_score):
     if all(elem in unique_boulder_ids for elem in [33, 99, 86, 20, 35]):
         # dirt border
         unlocked_borders.append(9)
+    else:
+        to_unlock[9] = [elem for elem in [33, 99, 86, 20, 35] if elem not in unique_boulder_ids]
     if all(elem in unique_boulder_ids for elem in [21, 4, 15, 28, 14, 13, 22]):
         # animal border
         unlocked_borders.append(10)
+    else:
+        to_unlock[10] = [elem for elem in [21, 4, 15, 28, 14, 13, 22] if elem not in unique_boulder_ids]
     if any(user_df['attempts'].values >= 10):
         # mud border
         unlocked_borders.append(11)
     if all(elem in unique_boulder_ids for elem in [105, 113, 30, 69, 68, 103]):
         # stone border
         unlocked_borders.append(12)
+    else:
+        to_unlock[12] = [elem for elem in [105, 113, 30, 69, 68, 103] if elem not in unique_boulder_ids]
     if all(elem in unique_boulder_ids for elem in [61, 52, 57, 58, 25, 72, 70, 77]):
         # water border
         unlocked_borders.append(13)
+    else:
+        to_unlock[13] = [elem for elem in [61, 52, 57, 58, 25, 72, 70, 77] if elem not in unique_boulder_ids]
     if all(elem in unique_boulder_ids for elem in [128, 84, 122, 73, 135, 133]):
         # muscle border
         unlocked_borders.append(14)
+    else:
+        to_unlock[14] = [elem for elem in [128, 84, 122, 73, 135, 133] if elem not in unique_boulder_ids]
     if all(elem in unique_boulder_ids for elem in [47, 97, 87, 63, 37]):
         # bandage border
         unlocked_borders.append(15)
+    else:
+        to_unlock[15] = [elem for elem in [47, 97, 87, 63, 37] if elem not in unique_boulder_ids]
     if sends_in_december >= 10:
         # ice border
         unlocked_borders.append(16)
     if all(elem in unique_boulder_ids for elem in [100, 114, 42, 23]):
         # caveman border
         unlocked_borders.append(17)
+    else:
+        to_unlock[17] = [elem for elem in [100, 114, 42, 23] if elem not in unique_boulder_ids]
     if all(elem in unique_boulder_ids for elem in [91, 83, 30, 67, 71, 116, 98]):
         # nature border
         unlocked_borders.append(18)
+    else:
+        to_unlock[18] = [elem for elem in [91, 83, 30, 67, 71, 116, 98] if elem not in unique_boulder_ids]
     if user_df[(user_df['sent_date'].dt.month == 12) & (user_df['sent_date'].dt.day == 22)].shape[0] > 0:
         # christmas border
         unlocked_borders.append(19)
 
-    return unlocked_borders
+    return unlocked_borders, to_unlock
