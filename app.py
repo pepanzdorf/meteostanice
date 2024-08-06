@@ -1359,13 +1359,28 @@ def climbing_stats():
         params={"angle": angle},
     )
 
+    built_boulder_counts = pd.read_sql(
+        """
+            SELECT
+                u.name as built_by,
+                COUNT(b.id) as count
+            FROM
+                climbing.boulders b
+            JOIN climbing.users u ON b.built_by = u.id
+            GROUP BY
+                u.name
+        """,
+        conn,
+    )
+
     grade_counts = dict(zip(grade_counts["grade"], grade_counts["count"]))
+    built_boulder_counts = dict(zip(built_boulder_counts["built_by"], built_boulder_counts["count"]))
     # Fill in missing grades
     for i in range(0, 52):
         if i not in grade_counts:
             grade_counts[i] = 0
 
-    all_climbing_stats = create_climbing_stats(df, grade_counts)
+    all_climbing_stats = create_climbing_stats(df, grade_counts, built_boulder_counts)
 
     return json.dumps(all_climbing_stats)
 

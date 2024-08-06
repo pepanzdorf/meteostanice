@@ -12,7 +12,7 @@ def note_season(date):
         return f"{year} 2"
 
 
-def create_climbing_stats_user(df, grade_counts, sessions_stats):
+def create_climbing_stats_user(df, grade_counts, built_boulder_count, username):
     current_season = note_season(datetime.now())
     unduplicated = df.drop_duplicates(subset=['boulder_id', 'challenge_id'])
 
@@ -62,7 +62,7 @@ def create_climbing_stats_user(df, grade_counts, sessions_stats):
         stats['score'] = 0
 
     stats['overall_score'] = overall_score
-    stats['unlocked_borders'], stats['to_unlock'] = completed_border_challenges(df, overall_score)
+    stats['unlocked_borders'], stats['to_unlock'] = completed_border_challenges(df, overall_score, built_boulder_count, username)
 
     return stats
 
@@ -143,7 +143,7 @@ def create_season_stats(df, grade_counts, is_current_season):
         }
 
 
-def create_climbing_stats(df, grade_counts):
+def create_climbing_stats(df, grade_counts, built_boulder_counts):
     df['year'] = df['sent_date'].dt.year
     df['month'] = df['sent_date'].dt.month
     df['day'] = df['sent_date'].dt.day
@@ -169,7 +169,7 @@ def create_climbing_stats(df, grade_counts):
     stats = {'sessions': sessions_stats}
     user_stats = {}
     for username, group in grouped_by_user:
-        user_stats[username] = create_climbing_stats_user(group, grade_counts, sessions_stats)
+        user_stats[username] = create_climbing_stats_user(group, grade_counts, built_boulder_counts[username] if username in built_boulder_counts else 0, username)
 
     # sort by score
     user_stats = {k: v for k, v in sorted(user_stats.items(), key=lambda item: item[1]['score'], reverse=True)}
@@ -181,9 +181,13 @@ def create_climbing_stats(df, grade_counts):
     return stats
 
 
-def completed_border_challenges(user_df, overall_score):
+def completed_border_challenges(user_df, overall_score, built_boulder_count, username):
     unique_boulder_ids = user_df['boulder_id'].unique()
     sends_in_december = sum(user_df['sent_date'].dt.month == 12)
+    flashed_boulders = user_df[user_df['attempts'] == 0]['boulder_id'].unique()
+    ascension_climbed = user_df[user_df['boulder_id'] == 151].shape[0]
+    campus_sends = user_df[user_df['challenge_id'] == 9]['boulder_id'].unique().shape[0]
+
     unlocked_borders = [0]  # No border
     to_unlock = {}
     if overall_score >= 1000:
@@ -238,6 +242,8 @@ def completed_border_challenges(user_df, overall_score):
     if sends_in_december >= 10:
         # ice border
         unlocked_borders.append(16)
+    else:
+        to_unlock[16] = f"{sends_in_december}/10"
     if all(elem in unique_boulder_ids for elem in [100, 114, 42, 23]):
         # caveman border
         unlocked_borders.append(17)
@@ -251,5 +257,43 @@ def completed_border_challenges(user_df, overall_score):
     if user_df[(user_df['sent_date'].dt.month == 12) & (user_df['sent_date'].dt.day == 22)].shape[0] > 0:
         # christmas border
         unlocked_borders.append(19)
+    if flashed_boulders.shape[0] >= 50:
+        # flash border
+        unlocked_borders.append(20)
+    else:
+        to_unlock[20] = f"{flashed_boulders.shape[0]}/50"
+    if built_boulder_count >= 20:
+        # builder border
+        unlocked_borders.append(21)
+    else:
+        to_unlock[21] = f"{built_boulder_count}/20"
+    if username == 'Martin':
+        # donation border
+        unlocked_borders.append(22)
+    if ascension_climbed >= 50:
+        # ascension border
+        unlocked_borders.append(23)
+    else:
+        to_unlock[23] = f"{ascension_climbed}/50"
+    if all(elem in unique_boulder_ids for elem in [1, 27, 16, 65, 120, 137, 146, 153]):
+        # hold border
+        unlocked_borders.append(24)
+    else:
+        to_unlock[24] = [elem for elem in [1, 27, 16, 65, 120, 137, 146, 153] if elem not in unique_boulder_ids]
+    if all(elem in unique_boulder_ids for elem in [110, 37, 56, 36, 85, 81, 104]):
+        # frog border
+        unlocked_borders.append(25)
+    else:
+        to_unlock[25] = [elem for elem in [110, 37, 56, 36, 85, 81, 104] if elem not in unique_boulder_ids]
+    if all(elem in unique_boulder_ids for elem in [92, 99, 127, 134, 135]):
+        # sushi border
+        unlocked_borders.append(26)
+    else:
+        to_unlock[26] = [elem for elem in [92, 99, 127, 134, 135] if elem not in unique_boulder_ids]
+    if campus_sends >= 15:
+        # wing border
+        unlocked_borders.append(27)
+    else:
+        to_unlock[27] = f"{campus_sends}/15"
 
     return unlocked_borders, to_unlock
