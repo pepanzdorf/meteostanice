@@ -734,8 +734,8 @@ def climbing_boulders(current_user, angle):
                 b.description,
                 b.build_time,
                 (SELECT name FROM climbing.users WHERE id = b.built_by) as built_by,
-                ROUND(COALESCE(AVG(s.grade), -1)) as average_grade,
-                COALESCE(AVG(s.rating), -1) as average_rating,
+                ROUND(bg.average_grade) as average_grade,
+                bg.average_rating as average_rating,
                 CASE
                     WHEN COUNT(u.name) > 0 THEN TRUE
                     ELSE FALSE
@@ -750,6 +750,8 @@ def climbing_boulders(current_user, angle):
                 END as favourite
             FROM
                 climbing.boulders b
+            JOIN
+                climbing.boulder_grades bg ON b.id = bg.id
             LEFT JOIN
                 climbing.sends s ON b.id = s.boulder_id AND s.angle = %(angle)s
             LEFT JOIN
@@ -759,7 +761,7 @@ def climbing_boulders(current_user, angle):
             ON
                 b.id = f.boulder_id AND f.name = %(username)s
             GROUP BY
-                b.id, b.name, f.name;
+                b.id, b.name, f.name, bg.average_grade, bg.average_rating;
         """,
         conn,
         params={"angle": angle, "username": current_user["username"], 'season_start': season_start, 'season_end': season_end},
@@ -942,7 +944,6 @@ def climbing_whoami(current_user):
 def climbing_log_send(current_user):
     if current_user["username"] == "Nepřihlášen":
         return "Musíte být přihlášen.", 401
-
 
     data = request.get_json()
     boulder_id = data["boulder_id"]
