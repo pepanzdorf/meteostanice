@@ -748,7 +748,8 @@ def climbing_boulders(current_user, angle):
                 CASE
                     WHEN f.name IS NOT NULL THEN TRUE
                     ELSE FALSE
-                END as favourite
+                END as favourite,
+                tb.tags
             FROM
                 climbing.boulders b
             JOIN
@@ -761,8 +762,10 @@ def climbing_boulders(current_user, angle):
                 (SELECT f.boulder_id, u.name from climbing.favourites f JOIN climbing.users u ON f.user_id = u.id) f
             ON
                 b.id = f.boulder_id AND f.name = %(username)s
+            LEFT JOIN
+                climbing.tags_by_boulder tb ON b.id = tb.boulder_id
             GROUP BY
-                b.id, b.name, f.name, bg.average_grade, bg.average_rating;
+                b.id, b.name, f.name, bg.average_grade, bg.average_rating, tb.tags;
         """,
         conn,
         params={"angle": angle, "username": current_user["username"], 'season_start': season_start, 'season_end': season_end},
@@ -1194,7 +1197,7 @@ def save_boulder(current_user):
     holds = data["holds"]
     edit = data["edit"]
     bid = data["bid"]
-
+    tags = data["tags"]
 
     if current_user["username"] == "Nepřihlášen":
         return "Musíte být přihlášen.", 401
@@ -1227,6 +1230,18 @@ def save_boulder(current_user):
             {"bid": bid}
         )
 
+        cur.execute(
+            f"DELETE FROM climbing.boulder_tags WHERE boulder_id = %(bid)s",
+            {"bid": bid}
+        )
+
+        for tag in tags:
+            if tag is not None:
+                cur.execute(
+                    f"INSERT INTO climbing.boulder_tags (boulder_id, tag_id) VALUES (%(bid)s, %(tag)s)",
+                    {"bid": bid, "tag": tag}
+                )
+
         for hold in holds:
             cur.execute(
                 f"INSERT INTO climbing.boulder_holds (boulder_id, hold_id, hold_type) VALUES (%(bid)s, %(hold_id)s, %(hold_type)s)",
@@ -1253,6 +1268,13 @@ def save_boulder(current_user):
         )
 
         bid = cur.fetchone()[0]
+
+        for tag in tags:
+            if tag is not None:
+                cur.execute(
+                    f"INSERT INTO climbing.boulder_tags (boulder_id, tag_id) VALUES (%(bid)s, %(tag)s)",
+                    {"bid": bid, "tag": tag}
+                )
 
         for hold in holds:
             cur.execute(
@@ -1479,3 +1501,16 @@ def set_border(current_user, border_id):
 
     return "OK", 200
 
+
+@app.route('/climbing/get_tags', methods=['GET'])
+def get_tags():
+    conn = psycopg2.connect(
+        **db_conn
+    )
+
+    df = pd.read_sql(
+        f"SELECT id, name FROM climbing.tags",
+        conn,
+    )
+
+    return df.to_json(orient="records")

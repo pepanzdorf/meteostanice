@@ -55,6 +55,15 @@ CREATE TABLE climbing.comments (
     date timestamp,
     text TEXT
 );
+CREATE TABLE climbing.tags (
+    id SERIAL UNIQUE PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE
+);
+CREATE TABLE climbing.boulder_tags (
+    boulder_id int REFERENCES climbing.boulders(id) ON DELETE CASCADE,
+    tag_id int REFERENCES climbing.tags(id),
+    PRIMARY KEY (boulder_id, tag_id)
+);
 
 CREATE VIEW climbing.boulder_grades AS
 SELECT
@@ -108,3 +117,14 @@ LEFT JOIN
 LEFT JOIN climbing.boulders b on bh.boulder_id = b.id
 LEFT JOIN climbing.boulder_grades bg on b.id = bg.id
 GROUP BY h.id;
+
+CREATE VIEW climbing.tags_by_boulder AS
+SELECT
+    b.id as boulder_id,
+    COALESCE(array_agg(t.id), '{}') as tags
+FROM
+    climbing.boulders b
+LEFT JOIN climbing.boulder_tags bt ON b.id = bt.boulder_id
+LEFT JOIN climbing.tags t ON bt.tag_id = t.id
+GROUP BY
+    b.id;
