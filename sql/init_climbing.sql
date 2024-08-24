@@ -22,7 +22,7 @@ CREATE TABLE climbing.users (
     name TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
     admin BOOLEAN DEFAULT FALSE,
-    icon_url TEXT,
+    icon_url TEXT default '/static/default_icon.jpg',
     description TEXT,
     border int default 0
 );
@@ -64,6 +64,11 @@ CREATE TABLE climbing.boulder_tags (
     tag_id int REFERENCES climbing.tags(id),
     PRIMARY KEY (boulder_id, tag_id)
 );
+CREATE TABLE climbing.config (
+    key TEXT PRIMARY KEY,
+    value TEXT
+);
+
 
 CREATE VIEW climbing.boulder_grades AS
 SELECT

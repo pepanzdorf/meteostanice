@@ -1520,3 +1520,47 @@ def get_tags():
     )
 
     return df.to_json(orient="records")
+
+
+@app.route('/climbing/get_config', methods=['GET'])
+def get_angle():
+    conn = psycopg2.connect(
+        **db_conn
+    )
+
+    df = pd.read_sql(
+        f"SELECT key, value FROM climbing.config",
+        conn,
+    )
+
+    key_value = df.set_index("key").to_dict()["value"]
+    # Convert angle to int
+    key_value["angle"] = int(key_value["angle"])
+
+    return key_value
+
+
+@app.route('/climbing/set_angle/<int:angle>', methods=['GET'])
+@token_required
+def set_angle(current_user, angle):
+    if current_user["username"] == "Nepřihlášen":
+        return "Musíte být přihlášen.", 401
+
+    if not current_user["admin"]:
+        return "Nemáte oprávnění.", 403
+
+    conn = psycopg2.connect(
+        **db_conn
+    )
+
+    cur = conn.cursor()
+    cur.execute(
+        f"UPDATE climbing.config SET value = %(angle)s WHERE key = 'angle'",
+        {"angle": angle}
+    )
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return "OK", 200
