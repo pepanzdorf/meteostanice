@@ -113,7 +113,7 @@ CREATE VIEW climbing.hold_boulders AS
 SELECT
     h.id,
     array_agg(
-        ARRAY[b.name, ROUND(bg.average_grade)::TEXT]
+        ARRAY[b.name, ROUND(bg.average_grade)::TEXT, b.id::TEXT]
     ) as boulders
 FROM
     climbing.holds h
