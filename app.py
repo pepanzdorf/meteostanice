@@ -326,6 +326,7 @@ PATCH_114 = read_content("patch_1.1.4")
 PATCH_115 = read_content("patch_1.1.5")
 PATCH_116 = read_content("patch_1.1.6")
 PATCH_120 = read_content("patch_1.2.0")
+PATCH_121 = read_content("patch_1.2.1")
 
 
 @app.route("/")
@@ -1416,6 +1417,11 @@ def climbing_stats():
 @app.route('/climbing/app', methods=['GET'])
 def climbing_app():
     versions = [
+        {
+            "version": "1.2.1",
+            "name": "climbing_app_1.2.1.apk",
+            "description": PATCH_121
+        },
         {
             "version": "1.2.0",
             "name": "climbing_app_1.2.0.apk",
