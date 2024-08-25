@@ -68,6 +68,14 @@ CREATE TABLE climbing.config (
     key TEXT PRIMARY KEY,
     value TEXT
 );
+CREATE TABLE climbing.crack_sends (
+    id SERIAL UNIQUE PRIMARY KEY,
+    user_id int REFERENCES climbing.users(id) ON DELETE CASCADE,
+    is_vertical BOOLEAN,
+    crack_type int,
+    climbed_times float,
+    sent_date timestamp
+);
 
 
 CREATE VIEW climbing.boulder_grades AS

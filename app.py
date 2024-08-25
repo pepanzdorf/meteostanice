@@ -325,6 +325,7 @@ PATCH_113 = read_content("patch_1.1.3")
 PATCH_114 = read_content("patch_1.1.4")
 PATCH_115 = read_content("patch_1.1.5")
 PATCH_116 = read_content("patch_1.1.6")
+PATCH_120 = read_content("patch_1.2.0")
 
 
 @app.route("/")
@@ -1416,6 +1417,11 @@ def climbing_stats():
 def climbing_app():
     versions = [
         {
+            "version": "1.2.0",
+            "name": "climbing_app_1.2.0.apk",
+            "description": PATCH_120
+        },
+        {
             "version": "1.1.6",
             "name": "climbing_app_1.1.6.apk",
             "description": PATCH_116
@@ -1563,6 +1569,51 @@ def set_angle(current_user, angle):
     cur.execute(
         f"UPDATE climbing.config SET value = %(angle)s WHERE key = 'angle'",
         {"angle": angle}
+    )
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return "OK", 200
+
+
+@app.route('/climbing/crack/log_send', methods=['POST'])
+@token_required
+def climbing_crack_log_send(current_user):
+    if current_user["username"] == "Nepřihlášen":
+        return "Musíte být přihlášen.", 401
+
+    data = request.get_json()
+    is_vertical = data["is_vertical"]
+    crack_type = data["crack_type"]
+    whole_times = data["whole_times"]
+    decimal_times = data["decimal_times"]
+
+    if is_vertical is None or crack_type is None or whole_times is None or decimal_times is None:
+        return "Něco chybí.", 400
+
+    climbed_times = whole_times + decimal_times/10
+
+    conn = psycopg2.connect(
+        **db_conn
+    )
+
+    # Insert send into db
+    cur = conn.cursor()
+    cur.execute(
+        f"""
+        INSERT INTO climbing.crack_sends (user_id, is_vertical, crack_type, climbed_times, sent_date)
+        VALUES
+            (
+                (SELECT id FROM climbing.users WHERE name = %(username)s),
+                %(is_vertical)s,
+                %(crack_type)s,
+                %(climbed_times)s,
+                NOW()
+            )
+        """,
+        {"username": current_user["username"], "is_vertical": is_vertical, "crack_type": crack_type, "climbed_times": climbed_times}
     )
 
     conn.commit()
