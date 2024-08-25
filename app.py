@@ -1621,3 +1621,31 @@ def climbing_crack_log_send(current_user):
     conn.close()
 
     return "OK", 200
+
+
+@app.route('/climbing/crack/stats', methods=['GET'])
+def climbing_crack_stats():
+
+    conn = psycopg2.connect(
+        **db_conn
+    )
+
+    df = pd.read_sql(
+        """
+            SELECT
+                is_vertical,
+                crack_type,
+                climbed_times,
+                sent_date,
+                u.name as username
+            FROM
+                climbing.crack_sends s
+            JOIN
+                climbing.users u ON s.user_id = u.id
+        """,
+        conn,
+    )
+
+    all_crack_stats = create_crack_climbing_stats(df)
+
+    return json.dumps(all_crack_stats)

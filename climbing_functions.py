@@ -1,6 +1,8 @@
 import math
 from datetime import datetime
 
+import numpy as np
+
 
 def note_season(date):
     year = date.year
@@ -297,3 +299,36 @@ def completed_border_challenges(user_df, overall_score, built_boulder_count, use
         to_unlock[27] = f"{campus_sends}/15"
 
     return unlocked_borders, to_unlock
+
+
+def create_crack_climbing_stats_user(user_df, username):
+    overall_distance = np.where(user_df['is_vertical'], user_df['climbed_times'] * 5, user_df['climbed_times'] * 4).sum()
+    grouped_by_is_vertical = user_df.groupby('is_vertical')
+    stats = {}
+    for is_vertical, group in grouped_by_is_vertical:
+        grouped_by_type = group.groupby('crack_type')
+        stats['vertical' if is_vertical else 'horizontal'] = {}
+        for crack_type, group_type in grouped_by_type:
+            stats['vertical' if is_vertical else 'horizontal'][crack_type] = {
+                'climbed_distance': group_type['climbed_times'].sum() * 5 if is_vertical else group_type['climbed_times'].sum() * 4,
+                'best_consecutive': group_type['climbed_times'].max() * 5 if is_vertical else group_type['climbed_times'].max() * 4,
+            }
+    stats['overall_distance'] = overall_distance
+
+    return stats
+
+
+def create_crack_climbing_stats(df):
+    grouped_by_user = df.sort_values('sent_date').groupby('username')
+    user_stats = {}
+    for username, group in grouped_by_user:
+        user_stats[username] = create_crack_climbing_stats_user(group, username)
+
+    # sort by distance climbed
+    user_stats = {k: v for k, v in sorted(user_stats.items(), key=lambda item: item[1]['overall_distance'], reverse=True)}
+    # as array
+    user_stats = [(k, v) for k, v in user_stats.items()]
+
+    stats = {'users': user_stats}
+
+    return stats
