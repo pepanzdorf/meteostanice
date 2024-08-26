@@ -297,6 +297,9 @@ def completed_border_challenges(user_df, overall_score, built_boulder_count, use
         unlocked_borders.append(27)
     else:
         to_unlock[27] = f"{campus_sends}/15"
+    if username == 'Martin' or username == 'Melda' or username == 'Vávra' or username == 'Míra':
+        # bbq border
+        unlocked_borders.append(28)
 
     return unlocked_borders, to_unlock
 
