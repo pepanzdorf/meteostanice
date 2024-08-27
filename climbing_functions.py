@@ -189,6 +189,7 @@ def completed_border_challenges(user_df, overall_score, built_boulder_count, use
     flashed_boulders = user_df[user_df['attempts'] == 0]['boulder_id'].unique()
     ascension_climbed = user_df[user_df['boulder_id'] == 151].shape[0]
     campus_sends = user_df[user_df['challenge_id'] == 9]['boulder_id'].unique().shape[0]
+    goose_sends = user_df[user_df['challenge_id'] == 15]['boulder_id'].unique().shape[0]
 
     unlocked_borders = [0]  # No border
     to_unlock = {}
@@ -300,6 +301,11 @@ def completed_border_challenges(user_df, overall_score, built_boulder_count, use
     if username == 'Martin' or username == 'Melda' or username == 'Vávra' or username == 'Míra':
         # bbq border
         unlocked_borders.append(28)
+    if goose_sends >= 50:
+        # goose border
+        unlocked_borders.append(29)
+    else:
+        to_unlock[29] = f"{goose_sends}/50"
 
     return unlocked_borders, to_unlock
 
