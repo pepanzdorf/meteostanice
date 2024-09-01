@@ -1403,6 +1403,31 @@ def climbing_stats():
         conn,
     )
 
+    sandbag_and_soft = pd.read_sql(
+        """
+            WITH a AS (
+                SELECT
+                    s.user_id,
+                    s.grade,
+                    bg.average_grade
+                FROM
+                    climbing.sends s
+                JOIN climbing.boulder_grades bg ON bg.id = s.boulder_id
+            )
+            SELECT
+                u.name,
+                count(CASE WHEN grade < average_grade-1 THEN 1 END) as sandbag_count,
+                count(CASE WHEN grade > average_grade+1 THEN 1 END) as soft_count
+            FROM
+                a
+            JOIN climbing.users u ON a.user_id = u.id
+            GROUP BY
+                name
+            """,
+        conn
+    )
+
+    sandbag_and_soft = dict(zip(sandbag_and_soft["name"], sandbag_and_soft[["sandbag_count", "soft_count"]].apply(lambda x: x.to_list(), axis=1)))
     grade_counts = dict(zip(grade_counts["grade"], grade_counts["count"]))
     built_boulder_counts = dict(zip(built_boulder_counts["built_by"], built_boulder_counts["count"]))
     # Fill in missing grades
@@ -1410,7 +1435,7 @@ def climbing_stats():
         if i not in grade_counts:
             grade_counts[i] = 0
 
-    all_climbing_stats = create_climbing_stats(df, grade_counts, built_boulder_counts)
+    all_climbing_stats = create_climbing_stats(df, grade_counts, built_boulder_counts, sandbag_and_soft)
 
     return json.dumps(all_climbing_stats)
 

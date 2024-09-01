@@ -14,7 +14,7 @@ def note_season(date):
         return f"{year} 2"
 
 
-def create_climbing_stats_user(df, grade_counts, built_boulder_count, username):
+def create_climbing_stats_user(df, grade_counts, built_boulder_count, username, sandbag_and_soft):
     current_season = note_season(datetime.now())
     unduplicated = df.drop_duplicates(subset=['boulder_id', 'challenge_id'])
 
@@ -64,7 +64,7 @@ def create_climbing_stats_user(df, grade_counts, built_boulder_count, username):
         stats['score'] = 0
 
     stats['overall_score'] = overall_score
-    stats['unlocked_borders'], stats['to_unlock'] = completed_border_challenges(df, overall_score, built_boulder_count, username)
+    stats['unlocked_borders'], stats['to_unlock'] = completed_border_challenges(df, overall_score, built_boulder_count, username, sandbag_and_soft)
 
     return stats
 
@@ -145,7 +145,7 @@ def create_season_stats(df, grade_counts, is_current_season):
         }
 
 
-def create_climbing_stats(df, grade_counts, built_boulder_counts):
+def create_climbing_stats(df, grade_counts, built_boulder_counts, sandbag_and_soft):
     df['year'] = df['sent_date'].dt.year
     df['month'] = df['sent_date'].dt.month
     df['day'] = df['sent_date'].dt.day
@@ -171,7 +171,7 @@ def create_climbing_stats(df, grade_counts, built_boulder_counts):
     stats = {'sessions': sessions_stats}
     user_stats = {}
     for username, group in grouped_by_user:
-        user_stats[username] = create_climbing_stats_user(group, grade_counts, built_boulder_counts[username] if username in built_boulder_counts else 0, username)
+        user_stats[username] = create_climbing_stats_user(group, grade_counts, built_boulder_counts[username] if username in built_boulder_counts else 0, username, sandbag_and_soft[username])
 
     # sort by score
     user_stats = {k: v for k, v in sorted(user_stats.items(), key=lambda item: item[1]['score'], reverse=True)}
@@ -183,7 +183,7 @@ def create_climbing_stats(df, grade_counts, built_boulder_counts):
     return stats
 
 
-def completed_border_challenges(user_df, overall_score, built_boulder_count, username):
+def completed_border_challenges(user_df, overall_score, built_boulder_count, username, sandbag_and_soft):
     unique_boulder_ids = user_df['boulder_id'].unique()
     sends_in_december = sum(user_df['sent_date'].dt.month == 12)
     flashed_boulders = user_df[user_df['attempts'] == 0]['boulder_id'].unique()
@@ -306,6 +306,16 @@ def completed_border_challenges(user_df, overall_score, built_boulder_count, use
         unlocked_borders.append(29)
     else:
         to_unlock[29] = f"{goose_sends}/50"
+    if sandbag_and_soft[0] >= 10:
+        # sandbag border
+        unlocked_borders.append(30)
+    else:
+        to_unlock[30] = f"{sandbag_and_soft[0]}/10"
+    if sandbag_and_soft[1] >= 10:
+        # balloon border
+        unlocked_borders.append(31)
+    else:
+        to_unlock[31] = f"{sandbag_and_soft[1]}/10"
 
     return unlocked_borders, to_unlock
 
