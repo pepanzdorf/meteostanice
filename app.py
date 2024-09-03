@@ -1692,3 +1692,40 @@ def climbing_crack_stats():
     all_crack_stats = create_crack_climbing_stats(df)
 
     return json.dumps(all_crack_stats)
+
+
+@app.route('/climbing/sends/<string:date>', methods=['GET'])
+def climbing_sends(date):
+    conn = psycopg2.connect(
+        **db_conn
+    )
+
+    df = pd.read_sql(
+        f"""
+            SELECT
+                s.id,
+                b.name,
+                ROUND(bg.average_grade) as grade,
+                s.attempts,
+                s.rating,
+                s.sent_date,
+                u.name as username,
+                s.challenge_id
+            FROM
+                climbing.sends s
+            JOIN
+                climbing.boulders b ON s.boulder_id = b.id
+            JOIN
+                climbing.boulder_grades bg ON s.boulder_id = bg.id
+            JOIN
+                climbing.users u ON s.user_id = u.id
+            WHERE
+                s.sent_date::date = %(date)s
+            ORDER BY
+                s.sent_date DESC
+        """,
+        conn,
+        params={"date": date},
+    )
+
+    return df.to_json(orient="records")
