@@ -1726,7 +1726,7 @@ def climbing_sends(date):
             JOIN
                 climbing.users u ON s.user_id = u.id
             WHERE
-                s.sent_date::date = %(date)s
+                (sent_date AT TIME ZONE 'UTC' AT TIME ZONE 'Europe/Prague')::date = %(date)s
             ORDER BY
                 s.sent_date DESC
         """,
