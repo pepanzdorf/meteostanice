@@ -82,7 +82,7 @@ def create_season_stats(df, grade_counts, is_current_season):
         flashes = len(group[group['attempts'] == 0])
         sum_sends += sends_grade
         sum_flashes += flashes
-        unique_sends[grade] = {'sends': sends_grade, 'flashes': flashes, 'boulders': group.index.tolist()}
+        unique_sends[grade] = {'sends': sends_grade, 'flashes': flashes, 'boulders': group.index.tolist(), 'flashed_boulders': group[group['attempts'] == 0].index.tolist()}
         if len(group) == grade_counts[grade]:
             completed_grades.append(grade)
 
