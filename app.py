@@ -1729,6 +1729,7 @@ def climbing_sends(date):
             SELECT
                 s.id,
                 b.name,
+                b.id as boulder_id,
                 ROUND(bg.average_grade) as grade,
                 s.attempts,
                 s.rating,
