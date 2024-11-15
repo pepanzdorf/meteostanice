@@ -1760,3 +1760,24 @@ def climbing_sends(date):
     )
 
     return df.to_json(orient="records")
+
+
+@app.route('/power/send_data', methods=['POST'])
+def power_send_data():
+    ticks = request.args.get('value')
+
+    conn = psycopg2.connect(
+        **db_conn
+    )
+
+    cur = conn.cursor()
+    cur.execute(
+        f"INSERT INTO garage.power (inserted_at, ticks) VALUES (NOW(), %(ticks)s)",
+        {"ticks": ticks}
+    )
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return "OK", 200
