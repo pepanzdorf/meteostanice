@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="CS">
+<head>
+    <title>Garáž Výkon</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #content-container {
+            display: flex;
+            flex-direction: column;
+            width: 1400px;
+            margin: 0 auto;
+        }
+        .form {
+            display: flex;
+            flex-direction: column;
+            margin-top: 20px;
+            float: right;
+            width: 225px;
+            gap: 10px;
+        }
+        #form-container {
+            display: flex;
+            flex-direction: column;
+            margin: 0 auto;
+            width: 100%;
+        }
+        label {
+            display: flex;
+            flex-direction: column;
+        }
+        #plot-container {
+            display: flex;
+            flex-direction: column;
+            margin: 0 auto;
+            width: 100%;
+            gap: 20px;
+        }
+        .plot {
+            height: 500px;
+        }
+    </style>
+</head>
+<body>
+    <div id="content-container">
+        <div id="form-container">
+            <form class="form" onsubmit="handleFormSubmit(event)">
+                <label>Od:
+                    <input type="datetime-local" id="start_datetime" name="start_datetime">
+                </label>
+                <label>Do:
+                    <input type="datetime-local" id="end_datetime" name="end_datetime">
+                </label>
+                <input type="submit" value="Uložit">
+            </form>
+        </div>
+        <div id="plot-container">
+            <div class="plot">
+                <canvas id="power-plot"></canvas>
+            </div>
+            <div class="plot">
+                <canvas id="energy-plot"></canvas>
+            </div>
+        </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.46/moment-timezone.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    function handleFormSubmit(event) {
+        event.preventDefault();
+        const local_start_datetime = moment(document.getElementById("start_datetime").value);
+        const local_end_datetime = moment(document.getElementById("end_datetime").value);
+        start_datetime = local_start_datetime.utc().format('YYYY-MM-DD HH:mm:ss');
+        end_datetime = local_end_datetime.utc().format('YYYY-MM-DD HH:mm:ss');
+        console.log(start_datetime, end_datetime);
+        fetchDataAndUpdateChart();
+    }
+
+    const ctx = document.getElementById('power-plot').getContext('2d');
+    const ctxe = document.getElementById('energy-plot').getContext('2d');
+
+    const power_plot = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Výkon (W)',
+                data: [],
+                borderColor: 'rgb(255, 0, 0)',
+                borderWidth: 1,
+                stepped: 'middle',
+                pointStyle: false
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    ticks: {
+                        maxTicksLimit: 10,
+                        maxRotation: 45,
+                        minRotation: 45
+                    }
+                },
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    const energy_plot = new Chart(ctxe, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Spotřebovaná energie (kWh)',
+                data: [],
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1,
+                pointStyle: false
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    ticks: {
+                        maxTicksLimit: 10,
+                        maxRotation: 45,
+                        minRotation: 45
+                }
+                },
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    async function fetchDataAndUpdateChart() {
+        try {
+            const response = await fetch('/power/get_data', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 'start_datetime': start_datetime, 'end_datetime': end_datetime })
+                }
+            );
+            const data = await response.json();
+
+            let { inserted_at, ticks, sum_ticks } = data;
+            inserted_at = Object.values(inserted_at);
+            ticks = Object.values(ticks);
+
+            inserted_at = inserted_at.map(date => `${moment(date).format('DD.MM.YYYY HH:mm:ss')}`);
+            let cumulative_ticks = [];
+            for (let i = 0; i < ticks.length; i++) {
+                if (i === 0) {
+                    cumulative_ticks.push(ticks[i]);
+                } else {
+                    cumulative_ticks.push(ticks[i] + cumulative_ticks[i - 1]);
+                }
+            }
+
+            power_plot.data.labels = inserted_at;
+            power_plot.data.datasets[0].data = ticks.map(tick => tick*12);
+
+            energy_plot.data.labels = inserted_at;
+            energy_plot.data.datasets[0].data = cumulative_ticks.map(tick => (tick+sum_ticks)/1000);
+
+            power_plot.update();
+            energy_plot.update();
+
+        } catch (error) {
+            console.error('Error fetching or updating chart data:', error);
+        }
+    }
+
+    let start_datetime = "Invalid date";
+    let end_datetime = "Invalid date";
+
+    setInterval(fetchDataAndUpdateChart, 150000); // 150,000 ms = 2.5 minutes
+    fetchDataAndUpdateChart();
+
+</script>
+</body>
+</html>

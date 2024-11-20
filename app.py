@@ -1,8 +1,7 @@
 import os
 import subprocess
 
-import flask
-from flask import Flask, render_template, redirect, request
+from flask import Flask, render_template, redirect, request, jsonify
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -1781,3 +1780,61 @@ def power_send_data():
     conn.close()
 
     return "OK", 200
+
+
+@app.route('/power/get_data', methods=['POST'])
+def power_get_data():
+    post_body = request.get_json()
+    start_datetime = post_body["start_datetime"]
+    end_datetime = post_body["end_datetime"]
+
+    if start_datetime == 'Invalid date':
+        start_datetime = datetime.now() - timedelta(days=1)
+
+    if end_datetime == 'Invalid date':
+        end_datetime = datetime.now()
+
+
+    conn = psycopg2.connect(
+        **db_conn
+    )
+
+    try:
+        df = pd.read_sql(
+            f"""
+            SELECT
+                inserted_at,
+                ticks
+            FROM
+                garage.power
+            WHERE inserted_at BETWEEN %(start_date)s AND %(end_date)s
+            ORDER BY
+                inserted_at
+            """,
+            conn,
+            params={"start_date": start_datetime, "end_date": end_datetime},
+        )
+    except pd.errors.DatabaseError:
+        return "Invalid request", 404
+
+    df["inserted_at"] = pd.to_datetime(df["inserted_at"], utc=True)
+    df["inserted_at"] = df["inserted_at"].dt.tz_convert("Europe/Prague")
+
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT sum(ticks) FROM garage.power WHERE inserted_at < %(start_date)s",
+        {"start_date": start_datetime},
+    )
+
+    sum_ticks = cur.fetchone()[0]
+    response_json = df.to_json(orient="columns")
+    response_json = json.loads(response_json)
+    response_json["sum_ticks"] = sum_ticks
+
+
+    return response_json
+
+
+@app.route('/power', methods=['GET'])
+def power():
+    return render_template("power.html")
