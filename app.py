@@ -1,5 +1,6 @@
 import os
 import subprocess
+from collections import defaultdict
 
 from flask import Flask, render_template, redirect, request, jsonify
 from flask_httpauth import HTTPBasicAuth
@@ -1759,6 +1760,292 @@ def climbing_sends(date):
     )
 
     return df.to_json(orient="records")
+
+
+@app.route('/climbing/competitions', methods=['GET'])
+def climbing_competitions():
+
+    conn = psycopg2.connect(
+        **db_conn
+    )
+
+    df = pd.read_sql(
+        """
+            SELECT
+                c.id,
+                c.name,
+                c.grade,
+                c.build_time,
+                u.name as built_by,
+                array_agg(cb.boulder_id ORDER BY cb.index) as boulders
+            FROM
+                climbing.competitions c
+            JOIN climbing.users u ON c.built_by = u.id
+            JOIN climbing.competition_boulders cb ON c.id = cb.competition_id
+            GROUP BY c.id, c.name, c.grade, c.build_time, u.name
+            ORDER BY
+                build_time DESC
+        """,
+        conn
+    )
+
+    return df.to_json(orient="records")
+
+
+@app.route('/climbing/competition', methods=['POST'])
+@token_required
+def save_comp(current_user):
+    data = request.get_json()
+    name = data["name"]
+    grade = data["grade"]
+    boulders = data["boulders"]
+    edit = data["edit"]
+    cid = data["cid"]
+
+    if current_user["username"] == "Nepřihlášen":
+        return "Musíte být přihlášen.", 401
+
+    conn = psycopg2.connect(
+        **db_conn
+    )
+
+    if edit:
+        pass
+        return "EDITED", 200
+    else:
+        cur = conn.cursor()
+        cur.execute(
+            f"SELECT id FROM climbing.users WHERE name = %(username)s",
+            {"username": current_user["username"]}
+        )
+
+        uid = cur.fetchone()[0]
+
+        cur.execute(
+            f"INSERT INTO climbing.competitions (name, grade, build_time, built_by) VALUES (%(name)s, %(grade)s, NOW(), %(uid)s) RETURNING id",
+            {"name": name, "grade": grade, "uid": uid}
+        )
+
+        cid = cur.fetchone()[0]
+
+        for i, bid in enumerate(boulders):
+            cur.execute(
+                f"INSERT INTO climbing.competition_boulders (competition_id, boulder_id, index) VALUES (%(cid)s, %(bid)s, %(index)s)",
+                {"cid": cid, "bid": bid, "index": i}
+            )
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return "SAVED", 200
+
+
+@app.route('/climbing/competition/<int:cid>', methods=['GET'])
+def climbing_competition(cid):
+
+    conn = psycopg2.connect(
+        **db_conn
+    )
+
+    df = pd.read_sql(
+        f"""
+            SELECT
+                u.name,
+                cs.zone,
+                cs.top,
+                cs.time,
+                cb.index,
+                cs.try_id,
+                cs.sent_date
+            FROM
+                climbing.competition_sends cs
+            JOIN climbing.competition_boulders cb ON cs.boulder_id = cb.boulder_id and cb.competition_id = %(cid)s
+            JOIN climbing.users u ON cs.user_id = u.id
+            WHERE
+                cs.competition_id = %(cid)s
+            ORDER BY
+                cb.index
+        """,
+        conn,
+        params={"cid": cid},
+    )
+
+    pd_json = json.loads(df.to_json(orient="records"))
+
+    # Group data by `user_id` and ensure sorting by `index`
+    grouped_data = defaultdict(lambda: {"name": None, "zone": [], "top": [], "time": None})
+
+    for entry in sorted(pd_json, key=lambda x: (x["try_id"], x["index"])):
+        try_id = entry["try_id"]
+        grouped_data[try_id]["zone"].append(entry["zone"])
+        grouped_data[try_id]["top"].append(entry["top"])
+        grouped_data[try_id]["time"] = entry["time"]
+        grouped_data[try_id]["name"] = entry["name"]
+        grouped_data[try_id]["sent_date"] = entry["sent_date"]
+
+    result = [{"id": try_id, "name": values['name'], "zone": values["zone"], "top": values["top"], "time": values["time"], "sent_date": values["sent_date"]}
+              for try_id, values in grouped_data.items()]
+
+    result = sorted(result, key=lambda x: x["sent_date"], reverse=True)
+
+    return json.dumps(result)
+
+
+@app.route('/climbing/competitions/log_send', methods=['POST'])
+@token_required
+def climbing_competition_log_send(current_user):
+    if current_user["username"] == "Nepřihlášen":
+        return "Musíte být přihlášen.", 401
+
+    data = request.get_json()
+    comp_id = data["comp_id"]
+    angle = data["angle"]
+    zone_attempts = data["zoneAttempts"]
+    top_attempts = data["topAttempts"]
+    time = data["time"]
+
+
+    if comp_id is None or zone_attempts is None or top_attempts is None or angle is None or time is None:
+        return "Něco chybí.", 400
+
+    conn = psycopg2.connect(
+        **db_conn
+    )
+
+    # get boulder ids
+    cur = conn.cursor()
+    cur.execute(
+        f"SELECT boulder_id FROM climbing.competition_boulders WHERE competition_id = %(comp_id)s ORDER BY index",
+        {"comp_id": comp_id}
+    )
+
+    boulder_ids = cur.fetchall()
+
+    if len(boulder_ids) != len(zone_attempts) or len(boulder_ids) != len(top_attempts):
+        return "Nevalidní send pro comp", 400
+
+
+    # find maximum try_id
+    cur.execute(
+        f"SELECT MAX(try_id) FROM climbing.competition_sends WHERE competition_id = %(comp_id)s",
+        {"comp_id": comp_id}
+    )
+
+    try_id_max = cur.fetchone()[0]
+    if try_id_max is None:
+        try_id_max = 0
+
+    # Insert send into db
+    for i, boulder_id in enumerate(boulder_ids):
+        cur.execute(
+            f"""
+            INSERT INTO
+                climbing.competition_sends (user_id, boulder_id, zone, top, time, angle, sent_date, competition_id, try_id)
+            VALUES
+                (
+                    (SELECT id FROM climbing.users WHERE name = %(username)s),
+                    %(boulder_id)s,
+                    %(zone_attempts)s,
+                    %(top_attempts)s,
+                    %(time)s,
+                    %(angle)s,
+                    NOW(),
+                    %(comp_id)s,
+                    %(try_id)s
+                )
+            """,
+        {
+                "username": current_user["username"],
+                "boulder_id": boulder_id[0],
+                "zone_attempts": zone_attempts[i]-1,
+                "top_attempts": top_attempts[i]-1,
+                "time": time, "angle": angle,
+                "comp_id": comp_id,
+                "try_id": try_id_max+1
+            }
+        )
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return "OK", 200
+
+
+@app.route('/climbing/competitions/send/<int:sid>', methods=['DELETE'])
+@token_required
+def competition_send_delete(current_user, sid):
+    if current_user["username"] == "Nepřihlášen":
+        return "Musíte být přihlášen.", 401
+
+    conn = psycopg2.connect(
+        **db_conn
+    )
+
+    # Check if user is owner of the send
+    cur = conn.cursor()
+    cur.execute(
+        f"SELECT name FROM climbing.competition_sends cs JOIN climbing.users u ON cs.user_id = u.id WHERE cs.try_id = %(sid)s",
+        {"sid": sid}
+    )
+
+    username = cur.fetchone()
+    if username is None:
+        return "Send neexistuje.", 404
+
+    if username[0] != current_user["username"] and not current_user["admin"]:
+        return "Nemáte oprávnění.", 403
+
+    cur = conn.cursor()
+    cur.execute(
+        f"DELETE FROM climbing.competition_sends WHERE try_id = %(sid)s",
+        {"sid": sid}
+    )
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return "OK", 200
+
+
+@app.route('/climbing/competition/<int:cid>', methods=['DELETE'])
+@token_required
+def competition_delete(current_user, cid):
+    if current_user["username"] == "Nepřihlášen":
+        return "Musíte být přihlášen.", 401
+
+    conn = psycopg2.connect(
+        **db_conn
+    )
+
+    # Check if user is owner of the comp
+    cur = conn.cursor()
+    cur.execute(
+        f"SELECT u.name FROM climbing.competitions c JOIN climbing.users u ON c.built_by = u.id WHERE c.id = %(cid)s",
+        {"cid": cid}
+    )
+
+    username = cur.fetchone()
+    if username is None:
+        return "Send neexistuje.", 404
+
+    if username[0] != current_user["username"] and not current_user["admin"]:
+        return "Nemáte oprávnění.", 403
+
+    cur = conn.cursor()
+    cur.execute(
+        f"DELETE FROM climbing.competitions WHERE id = %(cid)s",
+        {"cid": cid}
+    )
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return "OK", 200
+
 
 
 @app.route('/power/send_data', methods=['POST'])
