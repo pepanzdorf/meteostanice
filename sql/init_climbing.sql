@@ -141,3 +141,28 @@ LEFT JOIN climbing.boulder_tags bt ON b.id = bt.boulder_id
 LEFT JOIN climbing.tags t ON bt.tag_id = t.id
 GROUP BY
     b.id;
+CREATE TABLE climbing.competitions (
+    id SERIAL UNIQUE PRIMARY KEY,
+    name TEXT,
+    build_time timestamp,
+    built_by int REFERENCES climbing.users(id),
+    grade int
+);
+CREATE TABLE climbing.competition_boulders (
+    competition_id int REFERENCES climbing.competitions(id) ON DELETE CASCADE,
+    boulder_id int REFERENCES climbing.boulders(id) ON DELETE CASCADE,
+    index int,
+    PRIMARY KEY (competition_id, boulder_id)
+);
+CREATE TABLE climbing.competition_sends (
+    id SERIAL UNIQUE PRIMARY KEY,
+    user_id int REFERENCES climbing.users(id) ON DELETE CASCADE,
+    competition_id int REFERENCES climbing.competitions(id) ON DELETE CASCADE,
+    boulder_id int REFERENCES climbing.boulders(id) ON DELETE CASCADE,
+    angle int,
+    sent_date timestamp,
+    top int,
+    zone int,
+    time int,
+    try_id int
+);
