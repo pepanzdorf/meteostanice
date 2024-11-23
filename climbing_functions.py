@@ -14,7 +14,7 @@ def note_season(date):
         return f"{year} 2"
 
 
-def create_climbing_stats_user(df, grade_counts, built_boulder_count, username, sandbag_and_soft):
+def create_climbing_stats_user(df, grade_counts, built_boulder_count, username, sandbag_and_soft, completed_tags, possible_tags):
     current_season = note_season(datetime.now())
     unduplicated = df.drop_duplicates(subset=['boulder_id', 'challenge_id'])
 
@@ -64,7 +64,7 @@ def create_climbing_stats_user(df, grade_counts, built_boulder_count, username, 
         stats['score'] = 0
 
     stats['overall_score'] = overall_score
-    stats['unlocked_borders'], stats['to_unlock'] = completed_border_challenges(df, overall_score, built_boulder_count, username, sandbag_and_soft)
+    stats['unlocked_borders'], stats['to_unlock'] = completed_border_challenges(df, overall_score, built_boulder_count, username, sandbag_and_soft, completed_tags, possible_tags)
 
     return stats
 
@@ -145,7 +145,7 @@ def create_season_stats(df, grade_counts, is_current_season):
         }
 
 
-def create_climbing_stats(df, grade_counts, built_boulder_counts, sandbag_and_soft):
+def create_climbing_stats(df, grade_counts, built_boulder_counts, sandbag_and_soft, completed_tags, possible_tags):
     df['year'] = df['sent_date'].dt.year
     df['month'] = df['sent_date'].dt.month
     df['day'] = df['sent_date'].dt.day
@@ -171,7 +171,7 @@ def create_climbing_stats(df, grade_counts, built_boulder_counts, sandbag_and_so
     stats = {'sessions': sessions_stats}
     user_stats = {}
     for username, group in grouped_by_user:
-        user_stats[username] = create_climbing_stats_user(group, grade_counts, built_boulder_counts[username] if username in built_boulder_counts else 0, username, sandbag_and_soft[username])
+        user_stats[username] = create_climbing_stats_user(group, grade_counts, built_boulder_counts[username] if username in built_boulder_counts else 0, username, sandbag_and_soft[username], completed_tags[username] if username in completed_tags else [], possible_tags)
 
     # sort by score
     user_stats = {k: v for k, v in sorted(user_stats.items(), key=lambda item: item[1]['score'], reverse=True)}
@@ -183,13 +183,19 @@ def create_climbing_stats(df, grade_counts, built_boulder_counts, sandbag_and_so
     return stats
 
 
-def completed_border_challenges(user_df, overall_score, built_boulder_count, username, sandbag_and_soft):
+def completed_border_challenges(user_df, overall_score, built_boulder_count, username, sandbag_and_soft, completed_tags, possible_tags):
     unique_boulder_ids = user_df['boulder_id'].unique()
     sends_in_december = sum(user_df['sent_date'].dt.month == 12)
     flashed_boulders = user_df[user_df['attempts'] == 0]['boulder_id'].unique()
     ascension_climbed = user_df[user_df['boulder_id'] == 151].shape[0]
     campus_sends = user_df[user_df['challenge_id'] == 9]['boulder_id'].unique().shape[0]
     goose_sends = user_df[user_df['challenge_id'] == 15]['boulder_id'].unique().shape[0]
+    sloth_sends = user_df[user_df['challenge_id'] == 17]['boulder_id'].unique().shape[0]
+    speedrun_sends = user_df[user_df['challenge_id'] == 16]['boulder_id'].unique().shape[0]
+    needed_tags = []
+    for key, value in possible_tags.items():
+        if key not in completed_tags:
+            needed_tags.append(value)
 
     unlocked_borders = [0]  # No border
     to_unlock = {}
@@ -316,6 +322,24 @@ def completed_border_challenges(user_df, overall_score, built_boulder_count, use
         unlocked_borders.append(31)
     else:
         to_unlock[31] = f"{sandbag_and_soft[1]}/10"
+    if len(needed_tags) == 0:
+        # tag border
+        unlocked_borders.append(32)
+    else:
+        if len(needed_tags) > 5:
+            to_unlock[32] = '\n'.join(needed_tags[:5]) + f"\na {len(needed_tags) - 5} dalších"
+        else:
+            to_unlock[32] = '\n'.join(needed_tags)
+    if sloth_sends >= 10:
+        # sloth border
+        unlocked_borders.append(33)
+    else:
+        to_unlock[33] = f"{sloth_sends}/10"
+    if speedrun_sends >= 10:
+        # speedrun border
+        unlocked_borders.append(34)
+    else:
+        to_unlock[34] = f"{speedrun_sends}/10"
 
     return unlocked_borders, to_unlock
 

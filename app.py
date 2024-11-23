@@ -1433,6 +1433,35 @@ def climbing_stats():
         conn
     )
 
+    completed_tags = pd.read_sql(
+        """
+            SELECT
+                array_agg(distinct bt.tag_id) as tags,
+                u.name
+            FROM
+                climbing.sends s
+            JOIN climbing.users u ON s.user_id = u.id
+            JOIN climbing.boulder_tags bt ON s.boulder_id = bt.boulder_id
+            GROUP BY u.name 
+            """,
+        conn
+    )
+
+    completed_tags = dict(zip(completed_tags["name"], completed_tags["tags"]))
+    possible_tags = pd.read_sql(
+        """
+            SELECT
+                id,
+                name
+            FROM
+                climbing.tags
+            """,
+        conn
+    )
+
+    possible_tags = dict(zip(possible_tags["id"], possible_tags["name"]))
+
+
     sandbag_and_soft = dict(zip(sandbag_and_soft["name"], sandbag_and_soft[["sandbag_count", "soft_count"]].apply(lambda x: x.to_list(), axis=1)))
     grade_counts = dict(zip(grade_counts["grade"], grade_counts["count"]))
     built_boulder_counts = dict(zip(built_boulder_counts["built_by"], built_boulder_counts["count"]))
@@ -1441,7 +1470,7 @@ def climbing_stats():
         if i not in grade_counts:
             grade_counts[i] = 0
 
-    all_climbing_stats = create_climbing_stats(df, grade_counts, built_boulder_counts, sandbag_and_soft)
+    all_climbing_stats = create_climbing_stats(df, grade_counts, built_boulder_counts, sandbag_and_soft, completed_tags, possible_tags)
 
     return json.dumps(all_climbing_stats)
 
