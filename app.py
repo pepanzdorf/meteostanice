@@ -2160,3 +2160,26 @@ def power_get_data():
 @app.route('/power', methods=['GET'])
 def power():
     return render_template("power.html")
+
+@app.route('/printer/send_data', methods=['POST'])
+def printer_send_data():
+    post_body = request.get_json()
+    time = post_body["time"]
+    temperature = post_body["temperature"]
+    humidity = post_body["humidity"]
+
+    conn = psycopg2.connect(
+        **db_conn
+    )
+
+    cur = conn.cursor()
+    cur.execute(
+        f"INSERT INTO tisk.records (inserted_at, temperature, humidity) VALUES (%(time)s, %(temperature)s, %(humidity)s)",
+        {"time": time, "temperature": temperature, "humidity": humidity}
+    )
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return "OK", 200
