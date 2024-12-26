@@ -9,9 +9,9 @@ def note_season(date):
     month = date.month
 
     if month <= 5:
-        return f"{year} 1"
+        return f"{year}-1"
     else:
-        return f"{year} 2"
+        return f"{year}-2"
 
 
 def create_climbing_stats_user(df, grade_counts, built_boulder_count, username, sandbag_and_soft, completed_tags, possible_tags):
@@ -22,15 +22,17 @@ def create_climbing_stats_user(df, grade_counts, built_boulder_count, username, 
 
     grouped_by_season = unique_sessions.groupby('season')
     sessions_stats = {}
-    overall_seasons = 0
+    sessions_stats['previous_seasons'] = {}
+    overall_sessions = 0
+    sessions_stats['current'] = 0
     for season, group in grouped_by_season:
         if season == current_season:
             sessions_stats['current'] = len(group)
         else:
             sessions_stats['previous_seasons'][season] = len(group)
-        overall_seasons += len(group)
+        overall_sessions += len(group)
 
-    sessions_stats['overall'] = overall_seasons
+    sessions_stats['overall'] = overall_sessions
 
     stats = {
         "all_sends": len(df),
@@ -158,6 +160,8 @@ def create_climbing_stats(df, grade_counts, built_boulder_counts, sandbag_and_so
     grouped_by_season = unique_sessions.groupby('season')
     sessions_stats = {}
     overall_seasons = 0
+    sessions_stats['previous_seasons'] = {}
+    sessions_stats['current'] = 0
     for season, group in grouped_by_season:
         if season == current_season:
             sessions_stats['current'] = len(group)
@@ -172,6 +176,17 @@ def create_climbing_stats(df, grade_counts, built_boulder_counts, sandbag_and_so
     user_stats = {}
     for username, group in grouped_by_user:
         user_stats[username] = create_climbing_stats_user(group, grade_counts, built_boulder_counts[username] if username in built_boulder_counts else 0, username, sandbag_and_soft[username], completed_tags[username] if username in completed_tags else [], possible_tags)
+
+    possible_seasons = df[['season']].drop_duplicates()
+    # add placements for seasons
+    for season in possible_seasons['season']:
+        if season == current_season:
+            continue
+        participants = [[k, v['previous_seasons'][season]['score']] for k, v in user_stats.items() if season in v['previous_seasons']]
+        participants = sorted(participants, key=lambda x: x[1], reverse=True)
+        for k, v in user_stats.items():
+            if season in v['previous_seasons']:
+                v['previous_seasons'][season]['placement'] = participants.index([k, v['previous_seasons'][season]['score']]) + 1
 
     # sort by score
     user_stats = {k: v for k, v in sorted(user_stats.items(), key=lambda item: item[1]['score'], reverse=True)}
@@ -263,7 +278,7 @@ def completed_border_challenges(user_df, overall_score, built_boulder_count, use
         unlocked_borders.append(18)
     else:
         to_unlock[18] = [elem for elem in [91, 83, 30, 67, 71, 116, 98] if elem not in unique_boulder_ids]
-    if user_df[(user_df['sent_date'].dt.month == 12) & (user_df['sent_date'].dt.day == 22)].shape[0] > 0:
+    if user_df[(user_df['sent_date'].dt.month == 12) & (user_df['sent_date'].dt.day >= 22)].shape[0] > 0:
         # christmas border
         unlocked_borders.append(19)
     if flashed_boulders.shape[0] >= 50:
