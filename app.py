@@ -735,10 +735,10 @@ def climbing_boulders(current_user, angle):
     time_now = datetime.now()
     if time_now.month <= 5:
         season_start = datetime(time_now.year, 1, 1)
-        season_end = datetime(time_now.year, 5, 31)
+        season_end = datetime(time_now.year, 5, 31, 23, 59, 59)
     else:
         season_start = datetime(time_now.year, 6, 1)
-        season_end = datetime(time_now.year, 12, 31)
+        season_end = datetime(time_now.year, 12, 31, 23, 59, 59)
 
     df = pd.read_sql(
         """
